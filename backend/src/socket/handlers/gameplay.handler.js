@@ -2,6 +2,39 @@ import { GAME_STATUSES } from '../../services/chess/store/GameStore.js';
 import { SOCKET_EVENTS } from '../constants/socket-events.constants.js';
 import { createSocketSuccess, emitSocketFailure, emitSocketSuccess } from '../socket-events.js';
 
+const roomTimeouts = new Map();
+
+function scheduleTimeout(gameId, game, io, chessService, logger) {
+  if (roomTimeouts.has(gameId)) {
+    clearTimeout(roomTimeouts.get(gameId));
+    roomTimeouts.delete(gameId);
+  }
+
+  if (![GAME_STATUSES.ACTIVE, GAME_STATUSES.CHECK].includes(game.status)) {
+    return;
+  }
+
+  let remainingMs = game.turn === 'w' ? game.whiteRemainingMs : game.blackRemainingMs;
+  
+  if (game.timerStartedAt) {
+    const elapsed = Date.now() - new Date(game.timerStartedAt).getTime();
+    remainingMs = Math.max(0, remainingMs - elapsed);
+  }
+  
+  const timeoutId = setTimeout(async () => {
+    try {
+      const terminalGame = await chessService.claimTimeout(gameId);
+      if (terminalGame.status === GAME_STATUSES.TIMEOUT) {
+        broadcastGameStatus(io, gameId, terminalGame);
+      }
+    } catch (error) {
+      logger.error({ err: error, gameId }, 'Failed to process scheduled timeout');
+    }
+  }, remainingMs + 500); // Add a 500ms grace period
+
+  roomTimeouts.set(gameId, timeoutId);
+}
+
 // Gameplay handlers synchronize authoritative ChessService results. They never
 // inspect legal moves or calculate board state; clients request actions, and
 // ChessService decides whether the game changes.
@@ -54,6 +87,8 @@ export function registerGameplayHandlers({ io, socket, roomManager, chessService
           room,
         }),
       );
+      
+      scheduleTimeout(gameId, game, io, chessService, logger);
 
       return undefined;
     } catch (error) {
@@ -88,6 +123,8 @@ export function registerGameplayHandlers({ io, socket, roomManager, chessService
       );
       broadcastBoardState(io, gameId, game);
       broadcastGameStatus(io, gameId, game);
+      
+      scheduleTimeout(gameId, game, io, chessService, logger);
 
       return undefined;
     } catch (error) {
@@ -135,6 +172,8 @@ export function registerGameplayHandlers({ io, socket, roomManager, chessService
           { socketId: socket.id, gameId, playerId: payload.playerId },
           'Socket game reconnected',
         );
+        
+        scheduleTimeout(gameId, reconnectedGame, io, chessService, logger);
 
         return emitSocketSuccess(
           socket,
@@ -145,6 +184,7 @@ export function registerGameplayHandlers({ io, socket, roomManager, chessService
       }
 
       logger.info({ socketId: socket.id, gameId }, 'Socket game state requested');
+      scheduleTimeout(gameId, game, io, chessService, logger);
       return emitSocketSuccess(socket, SOCKET_EVENTS.GAME_STATE, { game }, acknowledge);
     } catch (error) {
       return emitGameplayError({ socket, error, acknowledge, logger });
@@ -236,6 +276,29 @@ export function registerGameplayHandlers({ io, socket, roomManager, chessService
       return emitGameplayError({ socket, error, acknowledge, logger });
     }
   });
+
+  socket.on(SOCKET_EVENTS.CLAIM_TIMEOUT, async (payload = {}, acknowledge) => {
+    try {
+      const gameId = normalizeGameId(payload);
+      const game = await chessService.claimTimeout(gameId);
+
+      if (game.status === GAME_STATUSES.TIMEOUT) {
+        logger.info(
+          { socketId: socket.id, gameId },
+          'Socket timeout claimed and accepted',
+        );
+        broadcastGameStatus(io, gameId, game);
+      }
+
+      if (typeof acknowledge === 'function') {
+        acknowledge(createSocketSuccess({ game }));
+      }
+
+      return undefined;
+    } catch (error) {
+      return emitGameplayError({ socket, error, acknowledge, logger });
+    }
+  });
 }
 
 function broadcastBoardState(io, gameId, game) {
@@ -265,6 +328,11 @@ function broadcastGameStatus(io, gameId, game) {
 
   if (game.status === GAME_STATUSES.DRAW) {
     io.to(gameId).emit(SOCKET_EVENTS.DRAW, createSocketSuccess({ game }));
+    io.to(gameId).emit(SOCKET_EVENTS.GAME_OVER, createSocketSuccess(createGameOverPayload(game)));
+  }
+
+  if (game.status === GAME_STATUSES.TIMEOUT) {
+    io.to(gameId).emit(SOCKET_EVENTS.TIMEOUT, createSocketSuccess({ game }));
     io.to(gameId).emit(SOCKET_EVENTS.GAME_OVER, createSocketSuccess(createGameOverPayload(game)));
   }
 }

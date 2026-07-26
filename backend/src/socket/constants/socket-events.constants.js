@@ -34,6 +34,8 @@ export const SOCKET_EVENTS = Object.freeze({
   DRAW_DECLINED: 'draw_declined',
   PLAYER_RESIGNED: 'player_resigned',
   GAME_OVER: 'game_over',
+  TIMEOUT: 'timeout',
+  CLAIM_TIMEOUT: 'claim_timeout',
   ERROR: 'error',
 });
 

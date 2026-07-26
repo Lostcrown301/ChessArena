@@ -57,6 +57,10 @@ export class ChessMapper {
       status: activeGame.status,
       whitePlayer: this.mapPlayer(activeGame.whitePlayer),
       blackPlayer: this.mapPlayer(activeGame.blackPlayer),
+      timeControl: activeGame.timeControl,
+      whiteRemainingMs: activeGame.whiteRemainingMs,
+      blackRemainingMs: activeGame.blackRemainingMs,
+      timerStartedAt: activeGame.timerStartedAt?.toISOString?.() ?? null,
     };
   }
 

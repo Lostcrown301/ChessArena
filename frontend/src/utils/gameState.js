@@ -54,9 +54,9 @@ export function isTerminalGame(game) {
 }
 
 export function isGameActive(game) {
-  return Boolean(
-    game?.players?.white && game?.players?.black && ACTIVE_GAME_STATUSES.includes(game.status),
-  );
+  const hasWhite = Boolean(game?.players?.white ?? game?.whitePlayer);
+  const hasBlack = Boolean(game?.players?.black ?? game?.blackPlayer);
+  return Boolean(hasWhite && hasBlack && ACTIVE_GAME_STATUSES.includes(game.status));
 }
 
 export function isCurrentPlayerTurn(game, playerColor) {

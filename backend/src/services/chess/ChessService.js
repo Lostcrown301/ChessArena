@@ -6,6 +6,32 @@ import { ChessServiceError, chessValidator } from './ChessValidator.js';
 import { gameStore as defaultGameStore } from './store/StoreFactory.js';
 import { GAME_STATUSES, TERMINAL_GAME_STATUSES } from './store/GameStore.js';
 
+class Mutex {
+  constructor() {
+    this.locks = new Map();
+  }
+
+  async acquire(key) {
+    if (!this.locks.has(key)) {
+      this.locks.set(key, Promise.resolve());
+    }
+
+    let release;
+    const nextLock = new Promise(resolve => { release = resolve; });
+    const currentLock = this.locks.get(key);
+
+    this.locks.set(key, currentLock.then(() => nextLock));
+    await currentLock;
+
+    return () => {
+      if (this.locks.get(key) === nextLock) {
+        this.locks.delete(key);
+      }
+      release();
+    };
+  }
+}
+
 // ChessService is the authoritative chess engine boundary. Controllers request
 // actions, but this service is the only place that mutates game state.
 export class ChessService {
@@ -21,6 +47,7 @@ export class ChessService {
     this.mapper = mapper;
     this.completionPersistence = completionPersistence;
     this.logger = logger;
+    this.mutex = new Mutex();
   }
 
   /**
@@ -56,6 +83,7 @@ export class ChessService {
 
     activeGame.blackPlayer = blackPlayer;
     activeGame.status = this.getStatusFromPosition(activeGame.chess);
+    activeGame.timerStartedAt = new Date();
     this.refreshRuntimeState(activeGame);
 
     return this.mapper.mapGame(await this.gameStore.updateGame(activeGame));
@@ -71,29 +99,43 @@ export class ChessService {
    * @returns {Promise<Object>} The move result including the updated game and applied move.
    */
   async requestMove(gameId, { playerId, move }) {
-    const activeGame = await this.getExistingGame(gameId);
+    const release = await this.mutex.acquire(gameId);
+    try {
+      const activeGame = await this.getExistingGame(gameId);
 
-    this.validator.assertPlayerBelongsToGame(activeGame, playerId);
-    this.validator.assertGameCanAcceptMoves(activeGame);
-    this.validator.assertCorrectTurn(activeGame, playerId);
+      this.validator.assertPlayerBelongsToGame(activeGame, playerId);
+      this.validator.assertGameCanAcceptMoves(activeGame);
+      this.validator.assertCorrectTurn(activeGame, playerId);
 
-    const legalMove = this.validator.validateLegalMove(activeGame, move);
-    const appliedMove = activeGame.chess.move(legalMove);
-    const mappedMove = this.mapper.mapMove(
-      appliedMove,
-      activeGame.moveHistory.length + 1,
-      new Date(),
-    );
+      this.processTimer(activeGame);
 
-    activeGame.moveHistory.push(mappedMove);
-    activeGame.status = this.getStatusFromPosition(activeGame.chess);
-    activeGame.drawOffer = null;
-    this.refreshRuntimeState(activeGame);
+      if (activeGame.status === GAME_STATUSES.TIMEOUT) {
+        this.applyCompletionState(activeGame, playerId);
+        await this.saveAndCleanupIfTerminal(activeGame);
+        throw new ChessServiceError('TIMEOUT', 'Time has expired.', 422);
+      }
 
-    this.applyCompletionState(activeGame, playerId);
-    const savedGame = await this.saveAndCleanupIfTerminal(activeGame);
+      const legalMove = this.validator.validateLegalMove(activeGame, move);
+      const appliedMove = activeGame.chess.move(legalMove);
+      const mappedMove = this.mapper.mapMove(
+        appliedMove,
+        activeGame.moveHistory.length + 1,
+        new Date(),
+      );
 
-    return this.mapper.mapMoveResult(savedGame, mappedMove);
+      activeGame.moveHistory.push(mappedMove);
+      activeGame.status = this.getStatusFromPosition(activeGame.chess);
+      activeGame.drawOffer = null;
+      activeGame.timerStartedAt = new Date();
+      this.refreshRuntimeState(activeGame);
+
+      this.applyCompletionState(activeGame, playerId);
+      const savedGame = await this.saveAndCleanupIfTerminal(activeGame);
+
+      return this.mapper.mapMoveResult(savedGame, mappedMove);
+    } finally {
+      release();
+    }
   }
 
   /**
@@ -120,6 +162,34 @@ export class ChessService {
     this.refreshRuntimeState(activeGame);
 
     return this.mapper.mapGame(await this.saveAndCleanupIfTerminal(activeGame));
+  }
+
+  /**
+   * Processes a timeout claim for the game. If the active player's time has expired,
+   * ends the game and attributes the win to the opponent.
+   * @param {string} gameId - The UUID of the game.
+   * @returns {Promise<Object>} The updated (terminal) game state.
+   */
+  async claimTimeout(gameId) {
+    const release = await this.mutex.acquire(gameId);
+    try {
+      const activeGame = await this.getExistingGame(gameId);
+
+      if (![GAME_STATUSES.ACTIVE, GAME_STATUSES.CHECK].includes(activeGame.status)) {
+        return this.mapper.mapGame(activeGame);
+      }
+
+      this.processTimer(activeGame);
+
+      if (activeGame.status === GAME_STATUSES.TIMEOUT) {
+        this.refreshRuntimeState(activeGame);
+        return this.mapper.mapGame(await this.saveAndCleanupIfTerminal(activeGame));
+      }
+
+      return this.mapper.mapGame(activeGame);
+    } finally {
+      release();
+    }
   }
 
   async offerDraw(gameId, { playerId }) {
@@ -257,6 +327,36 @@ export class ChessService {
     activeGame.turn = activeGame.chess.turn();
     activeGame.updatedAt = new Date();
     return activeGame;
+  }
+
+  processTimer(activeGame) {
+    if (!activeGame.timerStartedAt) {
+      return;
+    }
+
+    const now = new Date();
+    const elapsedMs = Math.max(0, now.getTime() - activeGame.timerStartedAt.getTime());
+    const isWhiteTurn = activeGame.turn === 'w';
+
+    if (isWhiteTurn) {
+      activeGame.whiteRemainingMs -= elapsedMs;
+      if (activeGame.whiteRemainingMs <= 0) {
+        activeGame.whiteRemainingMs = 0;
+        activeGame.status = GAME_STATUSES.TIMEOUT;
+        activeGame.winner = activeGame.blackPlayer;
+        activeGame.loser = activeGame.whitePlayer;
+        activeGame.completedAt = now;
+      }
+    } else {
+      activeGame.blackRemainingMs -= elapsedMs;
+      if (activeGame.blackRemainingMs <= 0) {
+        activeGame.blackRemainingMs = 0;
+        activeGame.status = GAME_STATUSES.TIMEOUT;
+        activeGame.winner = activeGame.whitePlayer;
+        activeGame.loser = activeGame.blackPlayer;
+        activeGame.completedAt = now;
+      }
+    }
   }
 
   getStatusFromPosition(chess) {

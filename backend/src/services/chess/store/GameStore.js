@@ -9,6 +9,7 @@ export const GAME_STATUSES = Object.freeze({
   RESIGNED: 'RESIGNED',
   ABANDONED: 'ABANDONED',
   COMPLETED: 'COMPLETED',
+  TIMEOUT: 'TIMEOUT',
 });
 
 export const TERMINAL_GAME_STATUSES = Object.freeze([
@@ -17,6 +18,7 @@ export const TERMINAL_GAME_STATUSES = Object.freeze([
   GAME_STATUSES.RESIGNED,
   GAME_STATUSES.ABANDONED,
   GAME_STATUSES.COMPLETED,
+  GAME_STATUSES.TIMEOUT,
 ]);
 
 export class GameStoreError extends Error {
@@ -51,6 +53,11 @@ export class ActiveGame {
     this.status = GAME_STATUSES.WAITING;
     this.createdAt = now;
     this.updatedAt = now;
+
+    this.timeControl = { baseMs: 600000, incrementMs: 0 };
+    this.whiteRemainingMs = 600000;
+    this.blackRemainingMs = 600000;
+    this.timerStartedAt = null;
   }
 
   static fromSnapshot(snapshot) {
@@ -80,6 +87,11 @@ export class ActiveGame {
     activeGame.pgn = snapshot.pgn ?? activeGame.chess.pgn();
     activeGame.turn = snapshot.turn ?? activeGame.chess.turn();
 
+    activeGame.timeControl = snapshot.timeControl ?? { baseMs: 600000, incrementMs: 0 };
+    activeGame.whiteRemainingMs = typeof snapshot.whiteRemainingMs === 'number' ? snapshot.whiteRemainingMs : 600000;
+    activeGame.blackRemainingMs = typeof snapshot.blackRemainingMs === 'number' ? snapshot.blackRemainingMs : 600000;
+    activeGame.timerStartedAt = reviveDate(snapshot.timerStartedAt);
+
     return activeGame;
   }
 
@@ -99,6 +111,10 @@ export class ActiveGame {
       status: this.status,
       createdAt: serializeDate(this.createdAt),
       updatedAt: serializeDate(this.updatedAt),
+      timeControl: this.timeControl,
+      whiteRemainingMs: this.whiteRemainingMs,
+      blackRemainingMs: this.blackRemainingMs,
+      timerStartedAt: serializeDate(this.timerStartedAt),
     };
   }
 }

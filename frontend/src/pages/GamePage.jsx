@@ -399,8 +399,11 @@ export function GamePage() {
         <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]">
           <div className="min-w-0 space-y-4">
             <PlayerPanel
+              gameId={gameId}
               isCurrentTurn={isCurrentPlayerTurn(activeGame, 'black')}
               player={blackPlayer}
+              remainingMs={activeGame?.blackRemainingMs}
+              timerStartedAt={activeGame?.timerStartedAt}
             />
             <ChessBoardPanel
               isDraggable={canMove}
@@ -411,8 +414,11 @@ export function GamePage() {
               position={activeGame?.fen}
             />
             <PlayerPanel
+              gameId={gameId}
               isCurrentTurn={isCurrentPlayerTurn(activeGame, 'white')}
               player={whitePlayer}
+              remainingMs={activeGame?.whiteRemainingMs}
+              timerStartedAt={activeGame?.timerStartedAt}
             />
           </div>
 

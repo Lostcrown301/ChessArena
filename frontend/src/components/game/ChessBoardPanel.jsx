@@ -41,7 +41,7 @@ export function ChessBoardPanel({
           <Chessboard
             animationDuration={200}
             areArrowsAllowed={false}
-            arePiecesDraggable={isDraggable && !isSubmittingMove}
+            arePiecesDraggable={!isSubmittingMove}
             boardOrientation={orientation}
             customBoardStyle={{
               borderRadius: '6px',
