@@ -1,0 +1,48 @@
+export const SOCKET_EVENTS = Object.freeze({
+  CONNECTION: 'connection',
+  DISCONNECT: 'disconnect',
+  CREATE_ROOM: 'create_room',
+  JOIN_ROOM: 'join_room',
+  LEAVE_ROOM: 'leave_room',
+  CREATE_GAME: 'create_game',
+  JOIN_GAME: 'join_game',
+  MAKE_MOVE: 'make_move',
+  REQUEST_GAME_STATE: 'request_game_state',
+  OFFER_DRAW: 'offer_draw',
+  ACCEPT_DRAW: 'accept_draw',
+  DECLINE_DRAW: 'decline_draw',
+  RESIGN_GAME: 'resign_game',
+  ROOM_CREATED: 'room_created',
+  ROOM_JOINED: 'room_joined',
+  ROOM_LEFT: 'room_left',
+  ROOM_DELETED: 'room_deleted',
+  ROOM_FULL: 'room_full',
+  ROOM_NOT_FOUND: 'room_not_found',
+  PLAYER_JOINED: 'player_joined',
+  PLAYER_LEFT: 'player_left',
+  GAME_CREATED: 'game_created',
+  GAME_JOINED: 'game_joined',
+  GAME_STARTED: 'game_started',
+  MOVE_ACCEPTED: 'move_accepted',
+  MOVE_REJECTED: 'move_rejected',
+  BOARD_UPDATED: 'board_updated',
+  GAME_STATE: 'game_state',
+  CHECK: 'check',
+  CHECKMATE: 'checkmate',
+  DRAW: 'draw',
+  DRAW_OFFER: 'draw_offer',
+  DRAW_DECLINED: 'draw_declined',
+  PLAYER_RESIGNED: 'player_resigned',
+  GAME_OVER: 'game_over',
+  ERROR: 'error',
+});
+
+export const ROOM_ROLES = Object.freeze({
+  PLAYER: 'player',
+  SPECTATOR: 'spectator',
+});
+
+export const ROOM_STATUSES = Object.freeze({
+  WAITING: 'WAITING',
+  READY: 'READY',
+});

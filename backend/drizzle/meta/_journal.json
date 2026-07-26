@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1761409600000,
+      "tag": "0000_initial_database_layer",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1785000000000,
+      "tag": "0001_stockfish_analysis",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785000001000,
+      "tag": "0002_gemini_coaching",
+      "breakpoints": true
+    }
+  ]
+}
