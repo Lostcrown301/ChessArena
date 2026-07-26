@@ -1,6 +1,6 @@
 import 'dotenv/config';
 
-const requiredVariables = ['DATABASE_URL', 'REDIS_URL'];
+const requiredVariables = ['DATABASE_URL', 'REDIS_URL', 'CORS_ORIGIN'];
 
 function getEnv(name, fallback) {
   const value = process.env[name] ?? fallback;

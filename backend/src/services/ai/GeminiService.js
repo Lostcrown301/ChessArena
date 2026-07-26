@@ -39,40 +39,54 @@ export class GeminiService {
       return this.createDevelopmentExplanation(context, normalizedStyle);
     }
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    let attempt = 0;
+    const maxAttempts = 3;
+    let lastError;
 
-    try {
-      const response = await this.fetchClient(this.buildUrl(), {
-        body: JSON.stringify(this.buildRequestBody(context, normalizedStyle)),
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': this.apiKey,
-        },
-        method: 'POST',
-        signal: controller.signal,
-      });
+    while (attempt < maxAttempts) {
+      attempt++;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-      if (!response.ok) {
-        throw await this.mapHttpError(response);
+      try {
+        const response = await this.fetchClient(this.buildUrl(), {
+          body: JSON.stringify(this.buildRequestBody(context, normalizedStyle)),
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': this.apiKey,
+          },
+          method: 'POST',
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw await this.mapHttpError(response);
+        }
+
+        const payload = await response.json();
+        const text = payload?.candidates?.[0]?.content?.parts?.[0]?.text;
+        return this.mapper.mapGenerated(text, { style: normalizedStyle });
+      } catch (error) {
+        lastError = error;
+
+        if (error.name === 'AbortError') {
+          lastError = new GeminiServiceError('GEMINI_TIMEOUT', 'Gemini explanation timed out.', 504);
+        } else if (!(error instanceof GeminiServiceError)) {
+          this.logger.error({ err: error }, 'Gemini explanation failed');
+          lastError = new GeminiServiceError('GEMINI_UNAVAILABLE', 'Gemini is unavailable.', 503);
+        }
+
+        const isRetryable = lastError.statusCode === 429 || lastError.statusCode >= 500;
+        if (!isRetryable || attempt >= maxAttempts) {
+          throw lastError;
+        }
+
+        // Exponential backoff
+        const backoffMs = Math.pow(2, attempt) * 500;
+        await new Promise((resolve) => setTimeout(resolve, backoffMs));
+      } finally {
+        clearTimeout(timeoutId);
       }
-
-      const payload = await response.json();
-      const text = payload?.candidates?.[0]?.content?.parts?.[0]?.text;
-      return this.mapper.mapGenerated(text, { style: normalizedStyle });
-    } catch (error) {
-      if (error.name === 'AbortError') {
-        throw new GeminiServiceError('GEMINI_TIMEOUT', 'Gemini explanation timed out.', 504);
-      }
-
-      if (error instanceof GeminiServiceError) {
-        throw error;
-      }
-
-      this.logger.error({ err: error }, 'Gemini explanation failed');
-      throw new GeminiServiceError('GEMINI_UNAVAILABLE', 'Gemini is unavailable.', 503);
-    } finally {
-      clearTimeout(timeoutId);
     }
   }
 

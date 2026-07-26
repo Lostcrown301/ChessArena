@@ -88,6 +88,8 @@ export class StockfishService {
       const timeoutId = setTimeout(() => {
         cleanup();
         this.safeStop();
+        this.engine = null;
+        this.initializing = null;
         reject(new AnalysisServiceError('ENGINE_TIMEOUT', 'Stockfish analysis timed out.', 504));
       }, normalizedInput.timeLimit + 5000);
 
@@ -139,6 +141,8 @@ export class StockfishService {
         );
       } catch (error) {
         cleanup();
+        this.engine = null;
+        this.initializing = null;
         reject(
           new AnalysisServiceError(
             'ENGINE_CRASHED',

@@ -16,10 +16,12 @@
   "dependencies": {
     "@neondatabase/serverless": "^0.10.4",
     "chess.js": "^1.0.0",
+    "compression": "^1.8.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.45.2",
     "express": "^4.21.2",
+    "express-rate-limit": "^8.6.0",
     "helmet": "^8.0.0",
     "ioredis": "^5.4.2",
     "pino": "^9.6.0",

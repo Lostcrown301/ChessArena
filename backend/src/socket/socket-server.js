@@ -21,6 +21,8 @@ export function createSocketServer(
       origin: env.corsOrigins,
       credentials: true,
     },
+    pingInterval: 25000,
+    pingTimeout: 20000,
     connectionStateRecovery: {
       maxDisconnectionDuration: 120000,
       skipMiddlewares: true,
