@@ -1,142 +1,181 @@
 # Chess Arena
 
-Chess Arena is a full-stack foundation for a real-time multiplayer chess platform. The backend is server-authoritative: clients request actions, while the API validates moves, owns board state, synchronizes rooms, and persists completed games.
+![Chess Arena Header](https://via.placeholder.com/1200x300?text=Chess+Arena+-+Realtime+Multiplayer+Chess)
 
-Authentication is intentionally not implemented; players use generated UUIDs and display names.
+A production-quality, full-stack foundation for a real-time multiplayer chess platform. 
+
+The application uses a server-authoritative architecture where clients request actions, but the API validates moves, owns the board state, synchronizes rooms, and persists completed games.
+
+## Why this project?
+Chess Arena was built to demonstrate how to seamlessly orchestrate complex state across multiple specialized backend services (Redis, PostgreSQL, Stockfish, Gemini AI) while serving a highly interactive React/Vite frontend over WebSockets. It serves as a comprehensive reference architecture for real-time multiplayer game development in Node.js.
 
 ## Features
 
-- React/Vite frontend foundation with routing, API client, Socket.IO client, Tailwind CSS, `react-chessboard`, and `chess.js` dependencies.
-- Express API with health checks, structured responses, global error handling, and 404 middleware.
-- Socket.IO room lifecycle and real-time multiplayer gameplay events.
-- Scalable React frontend architecture with reusable UI primitives, layouts, contexts, hooks, and service boundaries.
-- Authoritative chess validation through `ChessService` and `chess.js`.
-- Drizzle ORM schema for players, games, moves, and analysis.
-- Active-game storage abstraction with in-memory and Redis implementations.
-- Completed-game archival to PostgreSQL with placeholder analysis rows.
-- Manual Stockfish position analysis through an isolated backend API.
-- Gemini-powered coaching that explains Stockfish analysis without replacing it.
-- Pino logging across HTTP, Socket.IO, Redis, and persistence flows.
+- **Real-time Multiplayer:** Instant, low-latency move broadcasting and room management via Socket.IO.
+- **Server-Authoritative Validation:** The backend strictly enforces rules using `chess.js`, preventing any client-side cheating.
+- **AI Coaching:** Post-game human-readable analysis powered by Google's Gemini, combined with precise Stockfish 16.1 engine evaluations.
+- **Scalable Architecture:** Designed with stateless Node processes, delegating active game state to Redis for horizontal scalability.
+- **Production Hardened:** Implements rate-limiting, Helmet security headers, strict CORS, crash recovery, and request tracing.
+- **Beautiful UI:** Polished, responsive React frontend built with Tailwind CSS, `react-chessboard`, and accessible component primitives.
 
 ## Architecture Overview
 
-```text
-Client
-  -> REST / Socket.IO
-  -> Express + Socket Handlers
-  -> ChessService
-  -> GameStore abstraction
-     -> InMemoryGameStore for local development
-     -> RedisGameStore for production active games
-  -> Analysis API
-     -> Stockfish engine queue
-  -> AI Coaching API
-     -> Gemini generateContent
-  -> Neon PostgreSQL for completed games
-```
+Chess Arena utilizes a micro-service-like separation of concerns within a monolithic repository.
 
-Frontend deploys to Vercel. Backend deploys to Render. PostgreSQL is hosted by Neon, and Redis is hosted by Render Redis.
+1. **Frontend:** React application communicating via standard HTTP (for history/auth) and Socket.IO (for gameplay).
+2. **Backend:** Express API and Socket.IO server handling business logic.
+3. **Data Layer:** 
+   - **Redis:** Manages ephemeral, high-speed active game state.
+   - **PostgreSQL:** Archives completed games and history (managed via Drizzle ORM).
+4. **Analysis Layer:**
+   - **Stockfish:** Isolated queue-based service for raw positional evaluation.
+   - **Gemini:** AI service that transforms Stockfish data into natural language coaching.
 
-## Tech Stack
+For more details, see the [Architecture Documentation](./docs/ARCHITECTURE.md).
 
-- Frontend: React, JavaScript, Vite, Tailwind CSS, React Router, Axios, Socket.IO Client, react-chessboard, chess.js
-- Backend: Node.js, Express.js, Socket.IO, Drizzle ORM, Pino, Stockfish, Gemini API
-- Data: Neon PostgreSQL, Render Redis
-- Deployment: Vercel frontend, Render backend
+## Technology Stack
 
-## Repository Structure
+- **Frontend:** React 18, Vite, Tailwind CSS, React Router, Socket.IO Client, `react-chessboard`
+- **Backend:** Node.js, Express.js 5, Socket.IO, Pino (Logging)
+- **Database / ORM:** Neon PostgreSQL, Drizzle ORM, Render Redis
+- **Engines / AI:** Stockfish 16.1 (WASM/Node), Google Gemini 2.0 API
+- **Deployment:** Vercel (Frontend), Render (Backend/Redis)
+
+## Folder Structure
 
 ```text
 Chess-Arena/
-|-- backend/
-|-- frontend/
-|-- docs/
-|   |-- DATABASE.md
-|   |-- ER_DIAGRAM.md
-|   |-- CHESS_ENGINE.md
-|   |-- SOCKET_ARCHITECTURE.md
-|   |-- MULTIPLAYER.md
-|   |-- FRONTEND_ARCHITECTURE.md
-|   |-- REDIS_ARCHITECTURE.md
-|   |-- STOCKFISH_ARCHITECTURE.md
-|   |-- GEMINI_ARCHITECTURE.md
-|   `-- PROJECT_STRUCTURE.md
-|-- README.md
-|-- CHANGELOG.md
-|-- .env.example
-|-- .gitignore
-|-- .prettierrc
-|-- .prettierignore
-|-- eslint.config.js
-|-- package.json
-`-- package-lock.json
+├── backend/                  # Express API, Socket server, and services
+│   ├── drizzle/              # Database migrations
+│   ├── src/
+│   │   ├── config/           # Environment and logger setup
+│   │   ├── db/               # Drizzle connection and schema
+│   │   ├── lib/              # Shared utilities (Redis client)
+│   │   ├── middleware/       # Express middlewares (Rate limiting, errors)
+│   │   ├── routes/           # REST API endpoints
+│   │   ├── services/         # Business logic (Chess, AI, Stockfish)
+│   │   └── socket/           # Socket.IO handlers
+├── frontend/                 # React SPA
+│   ├── src/
+│   │   ├── components/       # Reusable UI primitives and complex views
+│   │   ├── context/          # Global state (Theme, Socket, Game)
+│   │   ├── hooks/            # Custom React hooks
+│   │   ├── layouts/          # Page wrappers
+│   │   ├── pages/            # Routable views
+│   │   ├── services/         # API and Socket communication
+│   │   └── styles/           # Tailwind configuration
+├── docs/                     # Architectural and API documentation
+└── package.json              # Monorepo workspace configuration
 ```
 
-## Local Setup
+## Screenshots
 
+> *Replace these placeholders with actual screenshots of the application running.*
+
+| Lobby | Active Game | Game Review |
+|:---:|:---:|:---:|
+| ![Lobby](https://via.placeholder.com/400x300?text=Lobby+View) | ![Game](https://via.placeholder.com/400x300?text=Active+Game) | ![Review](https://via.placeholder.com/400x300?text=Game+Review) |
+
+---
+
+## Local Development Setup
+
+To run Chess Arena locally, you need Node.js (v20+), npm (v10+), and a local or cloud Redis/Postgres instance.
+
+### 1. Backend Setup
+Navigate to the `backend` folder, install dependencies (handled by root workspace), and copy the environment configuration:
 ```bash
-npm install
-cp frontend/.env.example frontend/.env
 cp backend/.env.example backend/.env
-npm run dev
+```
+Ensure you have a PostgreSQL database and a Redis server running.
+
+### 2. Frontend Setup
+Similarly, configure the frontend:
+```bash
+cp frontend/.env.example frontend/.env
 ```
 
-Frontend: http://localhost:5173
-
-Backend: http://localhost:4000
-
-Health check: http://localhost:4000/api/health
-
-Backend-only Drizzle commands:
-
+### 3. PostgreSQL Setup
+The application uses Drizzle ORM. Configure your `DATABASE_URL` in `backend/.env`, then run migrations to build the schema:
 ```bash
 npm run db:migrate --workspace backend
-npm run db:seed --workspace backend
-npm run db:studio --workspace backend
 ```
+
+### 4. Redis Setup
+Ensure a local Redis instance is running on port `6379`, or provide a cloud connection string in `REDIS_URL`. Redis is required if you set `GAME_STORE_DRIVER=redis`. (For local development without Redis, you can use `GAME_STORE_DRIVER=memory`).
+
+### 5. Stockfish Setup
+Stockfish is bundled as a WebAssembly/Node module via `stockfish.js`. No external binaries need to be installed. It initializes automatically when the backend starts.
+
+### 6. Gemini Setup
+To enable AI coaching, obtain an API key from Google AI Studio and set `GEMINI_API_KEY` in `backend/.env`. If left blank, the application degrades gracefully and relies solely on raw Stockfish evaluations.
+
+### 7. Starting the Application
+From the root directory, start both the frontend and backend concurrently:
+```bash
+npm install
+npm run dev
+```
+- **Frontend:** http://localhost:5173
+- **Backend API:** http://localhost:4000
+- **Health Check:** http://localhost:4000/api/health
+
+---
 
 ## Environment Variables
 
-Use the `.env.example` files in `frontend` and `backend` as the source of truth.
+The project uses `.env` files for configuration. A complete audit of all environment variables can be found in the [Environment Documentation](./docs/ENVIRONMENT.md).
 
-Frontend:
+---
 
-- `VITE_API_URL`
-- `VITE_SOCKET_URL`
+## Available npm Scripts
 
-Backend:
+From the repository root:
 
-- `NODE_ENV`
-- `PORT`
-- `CORS_ORIGIN`
-- `DATABASE_URL`
-- `REDIS_URL`
-- `GAME_STORE_DRIVER`
-- `ACTIVE_GAME_TTL_SECONDS`
-- `GEMINI_API_KEY`
-- `GEMINI_API_ENDPOINT`
-- `GEMINI_MODEL`
-- `LOG_LEVEL`
+- `npm run dev`: Starts both frontend (Vite) and backend (nodemon) in development mode.
+- `npm run build`: Compiles the frontend for production.
+- `npm run start`: Starts the backend in production mode.
+- `npm run lint`: Runs ESLint across all workspaces.
+- `npm run format`: Runs Prettier to format code.
+- `npm run format:check`: Validates formatting without applying changes.
 
-For production, set `GAME_STORE_DRIVER=redis` and configure `GEMINI_API_KEY`.
+Backend specific (`--workspace backend`):
+- `npm run db:migrate`: Applies Drizzle SQL migrations to the database.
+- `npm run db:studio`: Opens the Drizzle Studio visual database editor.
 
-## Deployment
+---
 
-Frontend is deployed to Vercel from the `frontend` workspace. Configure the Vercel environment variables to point to the Render backend URL.
+## Deployment Overview
 
-Backend is deployed to Render from the `backend` workspace. Configure Render with the Neon `DATABASE_URL`, Render Redis `REDIS_URL`, allowed `CORS_ORIGIN`, and production logging settings.
+Chess Arena is designed for PaaS platforms like Vercel and Render.
+- **Frontend:** Deploy the `frontend/` directory to **Vercel** as a Vite project.
+- **Backend:** Deploy the `backend/` directory to **Render** as a Node Web Service.
+- **Infrastructure:** Use Neon for serverless PostgreSQL and Render Redis for the cache layer.
 
-Run Drizzle migrations against Neon before serving production traffic.
+For step-by-step instructions, see the [Deployment Guide](./docs/DEPLOYMENT.md) and [Production Checklist](./docs/PRODUCTION_CHECKLIST.md).
 
-## Documentation
+---
 
-- [Database](./docs/DATABASE.md)
-- [ER Diagram](./docs/ER_DIAGRAM.md)
-- [Chess Engine](./docs/CHESS_ENGINE.md)
-- [Socket Architecture](./docs/SOCKET_ARCHITECTURE.md)
-- [Multiplayer](./docs/MULTIPLAYER.md)
-- [Frontend Architecture](./docs/FRONTEND_ARCHITECTURE.md)
-- [Redis Architecture](./docs/REDIS_ARCHITECTURE.md)
-- [Stockfish Architecture](./docs/STOCKFISH_ARCHITECTURE.md)
-- [Gemini Architecture](./docs/GEMINI_ARCHITECTURE.md)
-- [Project Structure](./docs/PROJECT_STRUCTURE.md)
+## Troubleshooting
+
+- **Socket Connection Fails:** Ensure `VITE_SOCKET_URL` in `frontend/.env` exactly matches the backend root URL without any path (e.g., `http://localhost:4000`).
+- **CORS Errors:** In production, ensure `CORS_ORIGIN` in `backend/.env` exactly matches your frontend domain, without trailing slashes.
+- **Games not saving:** Ensure `DATABASE_URL` is correct and you have run `npm run db:migrate`.
+- **"Gemini Unavailable" in Review:** Verify your `GEMINI_API_KEY` is correct and has not exceeded quota limits.
+
+---
+
+## Known Limitations
+
+- **Authentication:** There is no persistent user authentication. Players are assigned ephemeral UUIDs in local storage.
+- **Redis Persistence:** If using a free-tier ephemeral Redis instance, active games will be lost if the Redis server restarts.
+
+---
+
+## Future Roadmap
+
+- OAuth 2.0 / JWT persistent authentication.
+- ELO rating system and matchmaking queues.
+- PGN export and import functionality.
+- Spectator mode for high-profile active games.
+- Real-time chat within game rooms.

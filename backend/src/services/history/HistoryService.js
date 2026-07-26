@@ -31,6 +31,16 @@ export class HistoryService {
     this.logger = logger;
   }
 
+  /**
+   * Retrieves a paginated list of archived games, optionally filtered and sorted.
+   * @param {Object} params
+   * @param {number|string} params.page - The current page (1-indexed).
+   * @param {number|string} params.limit - The number of games per page (max 50).
+   * @param {string} [params.result] - Filter by result ('w', 'b', 'draw').
+   * @param {string} [params.search] - Search by player UUID.
+   * @param {string} [params.sort='desc'] - Sort direction by completion time.
+   * @returns {Promise<Object>} Paginated game list and metadata.
+   */
   async listHistory({ page = 1, limit = 10, result, search, sort = 'desc' }) {
     const normalizedPage = Math.max(1, Number(page));
     const normalizedLimit = Math.min(50, Math.max(1, Number(limit)));
@@ -58,6 +68,12 @@ export class HistoryService {
     };
   }
 
+  /**
+   * Retrieves the details and full move history for a specific archived game.
+   * @param {string} gameId - The UUID of the game.
+   * @returns {Promise<Object>} The game metadata and move list.
+   * @throws {HistoryServiceError} If the game does not exist.
+   */
   async getGame(gameId) {
     const game = await this.repositories.findGameWithPlayers(gameId);
 
@@ -70,6 +86,12 @@ export class HistoryService {
     return { game, moves };
   }
 
+  /**
+   * Retrieves the raw PGN string for a specific archived game.
+   * @param {string} gameId - The UUID of the game.
+   * @returns {Promise<string>} The PGN string.
+   * @throws {HistoryServiceError} If the game does not exist.
+   */
   async getPgn(gameId) {
     const game = await this.repositories.findGameWithPlayers(gameId);
 
@@ -80,6 +102,12 @@ export class HistoryService {
     return game.pgn;
   }
 
+  /**
+   * Retrieves the game details along with its associated post-game analysis (Stockfish & Gemini).
+   * @param {string} gameId - The UUID of the game.
+   * @returns {Promise<Object>} The game metadata, moves, and analysis data.
+   * @throws {HistoryServiceError} If the game or analysis does not exist.
+   */
   async getAnalysis(gameId) {
     const [game, analysis] = await Promise.all([
       this.getGame(gameId),

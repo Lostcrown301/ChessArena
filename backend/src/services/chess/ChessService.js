@@ -23,6 +23,12 @@ export class ChessService {
     this.logger = logger;
   }
 
+  /**
+   * Initializes a new game in the active store and assigns the creator as the White player.
+   * @param {Object} params
+   * @param {string} params.displayName - The requested name for the creator.
+   * @returns {Promise<Object>} A summary of the newly created game.
+   */
   async createGame({ displayName }) {
     const whitePlayer = this.createPlayer(displayName);
     const activeGame = await this.gameStore.createGame({
@@ -33,6 +39,14 @@ export class ChessService {
     return this.mapper.mapSummary(activeGame);
   }
 
+  /**
+   * Assigns a player to an open slot in the game (currently only Black).
+   * @param {string} gameId - The UUID of the game.
+   * @param {Object} params
+   * @param {string} params.playerId - The UUID of the joining player.
+   * @param {string} params.displayName - The requested name of the joining player.
+   * @returns {Promise<Object>} The updated game state.
+   */
   async joinGame(gameId, { playerId, displayName }) {
     const activeGame = await this.getExistingGame(gameId);
     const normalizedPlayerId = playerId ? this.validator.validatePlayerId(playerId) : randomUUID();
@@ -47,6 +61,15 @@ export class ChessService {
     return this.mapper.mapGame(await this.gameStore.updateGame(activeGame));
   }
 
+  /**
+   * Validates and applies a move to the board. If the move is terminal (checkmate/draw),
+   * archives the game to the permanent database.
+   * @param {string} gameId - The UUID of the game.
+   * @param {Object} params
+   * @param {string} params.playerId - The UUID of the player making the move.
+   * @param {Object} params.move - The requested move (from, to, promotion).
+   * @returns {Promise<Object>} The move result including the updated game and applied move.
+   */
   async requestMove(gameId, { playerId, move }) {
     const activeGame = await this.getExistingGame(gameId);
 
@@ -73,6 +96,13 @@ export class ChessService {
     return this.mapper.mapMoveResult(savedGame, mappedMove);
   }
 
+  /**
+   * Ends the game by resignation. Archives the game immediately.
+   * @param {string} gameId - The UUID of the game.
+   * @param {Object} params
+   * @param {string} params.playerId - The UUID of the player resigning.
+   * @returns {Promise<Object>} The updated (terminal) game state.
+   */
   async resignGame(gameId, { playerId }) {
     const activeGame = await this.getExistingGame(gameId);
 
@@ -259,6 +289,13 @@ export class ChessService {
     }
   }
 
+  /**
+   * Checks if a game has reached a terminal state (checkmate, draw, resignation).
+   * If it has, the game is archived to PostgreSQL and deleted from Redis.
+   * @param {Object} activeGame - The current game state.
+   * @returns {Promise<Object>} The saved game state.
+   * @throws {ChessServiceError} If permanent archival fails.
+   */
   async saveAndCleanupIfTerminal(activeGame) {
     const savedGame = await this.gameStore.updateGame(activeGame);
 

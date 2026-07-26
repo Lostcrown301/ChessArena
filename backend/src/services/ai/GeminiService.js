@@ -24,6 +24,16 @@ export class GeminiService {
     this.prompts = prompts;
   }
 
+  /**
+   * Generates a natural language chess coaching explanation from a given evaluation context.
+   * Includes an exponential backoff retry loop for rate limits and server errors.
+   * @param {Object} context - The analysis context (PGN, FEN, Stockfish eval).
+   * @param {Object} options
+   * @param {string} [options.style='beginner'] - The coaching style ('beginner', 'intermediate', 'advanced').
+   * @param {number} [options.timeoutMs=15000] - Request timeout.
+   * @returns {Promise<Object>} The mapped explanation object.
+   * @throws {GeminiServiceError} If generation fails or times out.
+   */
   async explain(context, { style = 'beginner', timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
     const normalizedStyle = this.prompts.validateStyle(style);
 

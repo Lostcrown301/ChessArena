@@ -145,6 +145,13 @@ The API returns the shared response envelope for failures:
 }
 ```
 
+### Resilience & Retry Logic
+
+The Gemini service implements an **exponential backoff retry loop** to handle transient network issues or rate limits gracefully.
+- If the API returns a `429 Too Many Requests` or any `5xx Server Error`, the service automatically retries the request up to 3 times.
+- The delay doubles on each attempt (e.g., 500ms, 1000ms, 2000ms).
+- If the request still fails after the maximum attempts, the final error is thrown.
+
 Handled conditions include:
 
 - missing or invalid analysis IDs

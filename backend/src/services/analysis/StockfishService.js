@@ -22,6 +22,11 @@ export class StockfishService {
     this.initializing = null;
   }
 
+  /**
+   * Lazily initializes the Stockfish WebAssembly engine.
+   * @returns {Promise<Object>} The initialized engine instance.
+   * @throws {AnalysisServiceError} If initialization fails.
+   */
   async initialize() {
     if (this.engine) {
       return this.engine;
@@ -48,6 +53,10 @@ export class StockfishService {
     return this.initializing;
   }
 
+  /**
+   * Gracefully shuts down the Stockfish engine and releases runtime memory.
+   * Typically called during server shutdown.
+   */
   async shutdown() {
     if (!this.engine) {
       return;
@@ -62,6 +71,16 @@ export class StockfishService {
     }
   }
 
+  /**
+   * Submits a FEN to the Stockfish engine for evaluation.
+   * Runs inside an isolated queue to prevent overlapping UCI commands.
+   * @param {Object} params
+   * @param {string} params.fen - The board state to evaluate.
+   * @param {number} [params.depth=15] - The target depth to search.
+   * @param {number} [params.timeLimit=5000] - The maximum search time in milliseconds.
+   * @returns {Promise<Object>} The parsed evaluation result (score, best move, PV).
+   * @throws {AnalysisServiceError} If the engine crashes, times out, or returns invalid data.
+   */
   async evaluatePosition({ depth = DEFAULT_DEPTH, fen, timeLimit = DEFAULT_TIME_LIMIT_MS }) {
     const normalizedInput = this.validateInput({ depth, fen, timeLimit });
 

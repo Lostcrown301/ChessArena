@@ -1,74 +1,103 @@
-# Database
+# Database Architecture
 
-Chess Arena uses Drizzle ORM with Neon PostgreSQL. The database model intentionally does not include authentication tables. Games are attributed to generated player records that contain only a UUID and display name.
+Chess Arena uses a relational database model implemented in PostgreSQL, managed through Drizzle ORM.
 
-## Commands
+The database is exclusively used for **archiving completed games**. Active games reside in Redis to eliminate write contention and latency during real-time gameplay.
 
-```bash
-npm run db:migrate --workspace backend
-npm run db:seed --workspace backend
-npm run db:studio --workspace backend
+---
+
+## 1. Entity Relationship (ER) Diagram
+
+```mermaid
+erDiagram
+    PLAYERS {
+        uuid id PK
+        varchar name
+        timestamp created_at
+    }
+    
+    GAMES {
+        uuid id PK
+        uuid white_player_id FK
+        uuid black_player_id FK
+        varchar status
+        varchar result
+        timestamp created_at
+        timestamp completed_at
+    }
+    
+    MOVES {
+        uuid id PK
+        uuid game_id FK
+        integer move_number
+        varchar from_square
+        varchar to_square
+        varchar piece
+        varchar color
+        varchar san
+        varchar fen_after
+        timestamp created_at
+    }
+    
+    ANALYSES {
+        uuid id PK
+        uuid game_id FK
+        jsonb stockfish_data
+        jsonb gemini_data
+        timestamp created_at
+    }
+
+    PLAYERS ||--o{ GAMES : "plays as white"
+    PLAYERS ||--o{ GAMES : "plays as black"
+    GAMES ||--|{ MOVES : "contains"
+    GAMES ||--o| ANALYSES : "has"
 ```
 
-`DATABASE_URL` is loaded from `backend/.env` through `dotenv`. In production, set it to the Neon PostgreSQL connection string in Render.
+---
 
-The seed script inserts local sample data with fixed UUIDs and refuses to run when `NODE_ENV=production`.
+## 2. Table Descriptions
 
-## Connection Layer
+### `players`
+Stores ephemeral user profiles. Since authentication is not implemented, players are uniquely identified by a UUID generated on the client and stored in `localStorage`.
+- **Indexes:** Primary Key on `id`.
 
-- [backend/src/db/connection.js](</E:/TBD/Chess Arena/backend/src/db/connection.js>) creates the Neon HTTP SQL client and Drizzle database instance.
-- [backend/src/db/client.js](</E:/TBD/Chess Arena/backend/src/db/client.js>) re-exports the default database connection for app code.
-- [backend/src/db/schema.js](</E:/TBD/Chess Arena/backend/src/db/schema.js>) owns tables, constraints, indexes, and Drizzle relations.
+### `games`
+Archives completed games.
+- `status`: Always represents a terminal state in the DB (e.g., `completed`, `resigned`, `drawn`).
+- `result`: Indicates the winner (`w`, `b`, or `draw`).
+- **Indexes:** Primary Key on `id`. Foreign keys to `players(id)`.
 
-## Tables
+### `moves`
+A complete chronological ledger of every move made in a game.
+- `san`: Standard Algebraic Notation (e.g., `Nxf3+`).
+- `fen_after`: The board state *after* the move was applied.
+- **Indexes:** 
+  - Primary Key on `id`.
+  - Composite Index on `(game_id, move_number)` for fast chronological retrieval of a game's move history.
 
-`players`
+### `analyses`
+Stores expensive, lazily-generated post-game reviews.
+- `stockfish_data`: JSON blob containing engine evaluation, depth, and best move.
+- `gemini_data`: JSON blob containing AI coaching tips and summaries.
+- **Indexes:** Primary Key on `id`. Unique Foreign Key on `game_id` (1:1 relationship).
 
-- Purpose: generated player identities without authentication.
-- Primary key: `id`.
-- Constraints: non-blank `display_name`.
-- Indexes: `display_name`.
+---
 
-`games`
+## 3. Migration Strategy
 
-- Purpose: match aggregate root linking white and black players to result metadata.
-- Foreign keys: `white_player_id`, `black_player_id`, `winner_id`.
-- Constraints: white and black players must differ, result must be allowed, winner must match the result, `ended_at` must not be earlier than `started_at`.
-- Indexes: player references, winner reference, `started_at`.
+Schema changes are managed using Drizzle Kit.
+1. Modify the schema definitions in `backend/src/db/schema.js`.
+2. Generate a migration file: `npm run db:generate`.
+3. Apply the migration to the database: `npm run db:migrate`.
 
-`moves`
+In production, migrations should be applied during the CI/CD deployment phase before the new application instances begin serving traffic.
 
-- Purpose: append-only move history for each game.
-- Foreign keys: `game_id`.
-- Constraints: positive `move_number`, non-blank `san`, non-blank `fen`.
-- Indexes: `game_id`, unique `(game_id, move_number)`.
+---
 
-`analysis`
+## 4. Persistence Flow
 
-- Purpose: optional one-to-one post-game review data.
-- Foreign keys: `game_id`.
-- Constraints: one analysis per game, accuracy values between 0 and 100, non-negative mistakes and blunders, positive Stockfish depth when present, non-blank best move when present, allowed AI style when present.
-- Stockfish fields: `final_evaluation`, `centipawn_score`, `mate_score`, `best_move`, `depth`, `analyzed_at`.
-- Gemini fields: `ai_summary`, `ai_tips`, `ai_explanation`, `ai_difficulty`, `ai_style`, `ai_generated_at`.
-- Indexes: unique `game_id`.
-
-## Repository Layer
-
-Repository modules live in [backend/src/repositories](</E:/TBD/Chess Arena/backend/src/repositories>).
-
-- `player-repository.js`
-- `game-repository.js`
-- `move-repository.js`
-- `analysis-repository.js`
-
-Repositories keep query code out of route handlers and Socket.IO handlers. They do not implement chess rules or authentication.
-
-## Migrations
-
-The initial migration is [backend/drizzle/0000_initial_database_layer.sql](</E:/TBD/Chess Arena/backend/drizzle/0000_initial_database_layer.sql>). It creates the required tables, constraints, foreign keys, indexes, and PostgreSQL table comments.
-
-[backend/drizzle/0001_stockfish_analysis.sql](</E:/TBD/Chess Arena/backend/drizzle/0001_stockfish_analysis.sql>) adds nullable Stockfish final-position analysis fields to the existing one-to-one analysis record.
-
-[backend/drizzle/0002_gemini_coaching.sql](</E:/TBD/Chess Arena/backend/drizzle/0002_gemini_coaching.sql>) adds nullable Gemini coaching cache fields to the same analysis record.
-
-The migration runner is [backend/scripts/migrate.js](</E:/TBD/Chess Arena/backend/scripts/migrate.js>) and uses Drizzle ORM's Neon HTTP migrator.
+1. **Gameplay:** Two players interact. Moves are validated and stored in Redis.
+2. **Termination:** A player is checkmated or resigns.
+3. **Archival:** The backend `ChessService` fires an asynchronous event.
+4. **Transaction:** The `game-repository` reads the final state from Redis, constructs the DB objects, and inserts the `games` and `moves` rows into PostgreSQL within a single database transaction.
+5. **Cleanup:** The active game is deleted from Redis.
