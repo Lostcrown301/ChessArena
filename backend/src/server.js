@@ -3,6 +3,7 @@ import { createApp } from './app.js';
 import { env } from './config/env.js';
 import { logger } from './config/logger.js';
 import { closeRedisClient } from './lib/redis.js';
+import { databaseConnection } from './db/connection.js';
 import { stockfishService } from './services/analysis/StockfishService.js';
 import { createSocketServer } from './socket/index.js';
 
@@ -23,8 +24,11 @@ function shutdown(signal) {
       logger.error({ error }, 'Error while closing HTTP server');
       process.exit(1);
     }
-
-    await Promise.allSettled([closeRedisClient(), stockfishService.shutdown()]);
+    await Promise.allSettled([
+      closeRedisClient(), 
+      stockfishService.shutdown(),
+      databaseConnection.pool.end()
+    ]);
     process.exit(0);
   });
 }
