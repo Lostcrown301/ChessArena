@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { sql } from '../db/connection.js';
+import { databaseConnection } from '../db/connection.js';
 import { getRedisClient } from '../lib/redis.js';
 import { stockfishService } from '../services/analysis/StockfishService.js';
 import { geminiService } from '../services/ai/GeminiService.js';
@@ -31,7 +31,7 @@ healthRouter.get('/ready', async (req, res) => {
   try {
     // 1. Check PostgreSQL
     try {
-      await sql`SELECT 1`;
+      await databaseConnection.sql`SELECT 1`;
       status.dependencies.database = 'ok';
     } catch (error) {
       status.dependencies.database = 'failed';
