@@ -31,6 +31,17 @@ apiClient.interceptors.request.use((config) => ({
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
+    if (error.code === 'ECONNABORTED' || error.message?.toLowerCase().includes('timeout')) {
+      return Promise.reject(
+        new ApiClientError({
+          message: 'The request took too long to complete. Please try again.',
+          status: 504,
+          code: 'TIMEOUT',
+          details: null,
+        }),
+      );
+    }
+
     const response = error.response;
     const apiError = response?.data?.error;
 

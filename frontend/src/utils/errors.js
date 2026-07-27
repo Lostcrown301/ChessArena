@@ -19,7 +19,12 @@ export function getFriendlyGameError(error) {
     return 'This browser is not registered as a player in that game.';
   }
 
-  if (error?.code === 'SOCKET_ACK_TIMEOUT' || error?.code === 'SOCKET_CONNECT_TIMEOUT') {
+  if (
+    error?.code === 'SOCKET_ACK_TIMEOUT' ||
+    error?.code === 'SOCKET_CONNECT_TIMEOUT' ||
+    error?.code === 'TIMEOUT' ||
+    error?.status === 504
+  ) {
     return 'The server did not respond in time. Please try again.';
   }
 
