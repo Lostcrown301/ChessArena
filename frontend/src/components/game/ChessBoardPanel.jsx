@@ -35,7 +35,6 @@ export function ChessBoardPanel({
     >
       <div
         className="mx-auto aspect-square w-full max-w-full overflow-hidden rounded-md ring-1 ring-slate-700"
-        style={{ maxWidth: 'min(74vh, 42rem)' }}
       >
         {position ? (
           <Chessboard

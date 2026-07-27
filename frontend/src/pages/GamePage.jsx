@@ -367,7 +367,7 @@ export function GamePage() {
         : 'Restoring game state';
 
   return (
-    <PageContainer className="max-w-7xl">
+    <div className="mx-auto flex h-[100dvh] w-full max-w-[1920px] flex-1 flex-col overflow-hidden px-4 py-4 sm:px-6 lg:px-8">
       <LoadingOverlay isVisible={isRecovering || Boolean(pendingAction)} label={loadingLabel} />
       <div className="fixed right-4 top-4 z-50 grid w-[min(24rem,calc(100vw-2rem))] gap-3">
         {toasts.map((toast) => (
@@ -377,32 +377,46 @@ export function GamePage() {
         ))}
       </div>
 
-      <Section eyebrow="Game" title="Arena board">
-        <div className="mb-5 flex flex-col gap-3 rounded-lg border border-slate-800 bg-slate-900/80 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold text-slate-50">Socket synchronization</p>
-            {connectionError ? (
-              <p className="mt-1 text-sm text-rose-200">{connectionError}</p>
-            ) : (
-              <p className="mt-1 text-sm text-slate-400">
-                Backend state is the source of truth. This browser is{' '}
-                {playerColor ? `playing ${playerColor}` : 'viewing without a player identity'}.
-              </p>
-            )}
-            {hasDrawOfferByPlayer ? (
-              <p className="mt-1 text-sm text-amber-200">Your draw offer is pending.</p>
-            ) : null}
-          </div>
-          <ConnectionStatus label={connectionStatus} tone={isConnected ? 'success' : 'neutral'} />
+      <div className="mb-4 flex shrink-0 flex-col gap-3 rounded-lg border border-slate-800 bg-slate-900/80 p-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold text-slate-50">Socket synchronization</p>
+          {connectionError ? (
+            <p className="mt-1 text-sm text-rose-200">{connectionError}</p>
+          ) : (
+            <p className="mt-1 text-sm text-slate-400">
+              Backend state is the source of truth. This browser is{' '}
+              {playerColor ? `playing ${playerColor}` : 'viewing without a player identity'}.
+            </p>
+          )}
+          {hasDrawOfferByPlayer ? (
+            <p className="mt-1 text-sm text-amber-200">Your draw offer is pending.</p>
+          ) : null}
+        </div>
+        <ConnectionStatus label={connectionStatus} tone={isConnected ? 'success' : 'neutral'} />
+      </div>
+
+      <div className="flex min-h-0 flex-1 flex-col gap-6 xl:flex-row">
+        {/* Left Column: Game Info & History (Scrollable) */}
+        <div className="flex shrink-0 flex-col gap-4 overflow-y-auto xl:w-80 2xl:w-96 xl:pr-2">
+          <GameInfoPanel game={activeGame} gameId={gameId} orientation={boardOrientation} />
+          <MoveHistoryPanel moves={activeGame?.moveHistory ?? []} />
         </div>
 
-        <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]">
-          <div className="min-w-0 space-y-4">
+        {/* Center Column: Board (Maximized) */}
+        <div className="flex min-w-0 flex-1 flex-col items-center justify-center gap-4 overflow-hidden">
+          <div className="flex max-h-full w-full max-w-[min(80vh,800px)] flex-col space-y-4">
             <PlayerPanel
               gameId={gameId}
-              isCurrentTurn={isCurrentPlayerTurn(activeGame, 'black')}
-              player={blackPlayer}
-              remainingMs={activeGame?.blackRemainingMs}
+              isCurrentTurn={isCurrentPlayerTurn(
+                activeGame,
+                boardOrientation === 'white' ? 'black' : 'white'
+              )}
+              player={boardOrientation === 'white' ? blackPlayer : whitePlayer}
+              remainingMs={
+                boardOrientation === 'white'
+                  ? activeGame?.blackRemainingMs
+                  : activeGame?.whiteRemainingMs
+              }
               timerStartedAt={activeGame?.timerStartedAt}
             />
             <ChessBoardPanel
@@ -415,55 +429,81 @@ export function GamePage() {
             />
             <PlayerPanel
               gameId={gameId}
-              isCurrentTurn={isCurrentPlayerTurn(activeGame, 'white')}
-              player={whitePlayer}
-              remainingMs={activeGame?.whiteRemainingMs}
+              isCurrentTurn={isCurrentPlayerTurn(
+                activeGame,
+                boardOrientation === 'white' ? 'white' : 'black'
+              )}
+              player={boardOrientation === 'white' ? whitePlayer : blackPlayer}
+              remainingMs={
+                boardOrientation === 'white'
+                  ? activeGame?.whiteRemainingMs
+                  : activeGame?.blackRemainingMs
+              }
               timerStartedAt={activeGame?.timerStartedAt}
             />
           </div>
-
-          <aside className="min-w-0 space-y-4">
-            <WaitingForOpponent isVisible={activeGame?.status === 'WAITING'} />
-            <GameStatusPanel activeStatus={activeGame?.status} turn={activeGame?.turn} />
-            <AnalysisPanel
-              analysis={analysis}
-              error={analysisError}
-              isDisabled={!activeGame?.fen}
-              isThinking={isAnalyzing}
-              onAnalyze={handleAnalyzePosition}
-            />
-            <AIAnalysisPanel
-              error={aiError}
-              explanation={aiExplanation}
-              isDisabled={!analysis}
-              isGenerating={isGeneratingAi}
-              onExplain={handleExplainPosition}
-              onStyleChange={setAiStyle}
-              style={aiStyle}
-            />
-            <CapturedPiecesPanel capturedPieces={capturedPieces} />
-            <GameControls
-              canAcceptDraw={canAcceptDraw}
-              canOfferDraw={canOfferDraw}
-              canResign={canUseGameActions}
-              gameId={gameId}
-              hasPendingAction={Boolean(pendingAction)}
-              onAcceptDraw={() => runGameAction(acceptDraw, 'Draw accepted.')}
-              onDeclineDraw={() => runGameAction(declineDraw, 'Draw declined.')}
-              onFlipBoard={handleFlipBoard}
-              onLeaveGame={handleLeaveGame}
-              onOfferDraw={() => runGameAction(offerDraw, 'Draw offer sent.')}
-              onResign={() => runGameAction(resignGame, 'Resignation submitted.')}
-            />
-            <GameResultBanner game={activeGame} />
-          </aside>
         </div>
 
-        <div className="mt-6 grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,0.8fr)]">
-          <MoveHistoryPanel moves={activeGame?.moveHistory ?? []} />
-          <GameInfoPanel game={activeGame} gameId={gameId} orientation={boardOrientation} />
+        {/* Right Column: Status, Controls, Analysis (Scrollable) */}
+        <div className="flex shrink-0 flex-col gap-4 overflow-y-auto xl:w-80 2xl:w-96 xl:pl-2">
+          <WaitingForOpponent isVisible={activeGame?.status === 'WAITING'} />
+          <GameStatusPanel activeStatus={activeGame?.status} turn={activeGame?.turn} />
+          <GameControls
+            canAcceptDraw={canAcceptDraw}
+            canOfferDraw={canOfferDraw}
+            canResign={canUseGameActions}
+            gameId={gameId}
+            hasPendingAction={Boolean(pendingAction)}
+            onAcceptDraw={() => runGameAction(acceptDraw, 'Draw accepted.')}
+            onDeclineDraw={() => runGameAction(declineDraw, 'Draw declined.')}
+            onFlipBoard={handleFlipBoard}
+            onLeaveGame={handleLeaveGame}
+            onOfferDraw={() => runGameAction(offerDraw, 'Draw offer sent.')}
+            onResign={() => runGameAction(resignGame, 'Resignation submitted.')}
+          />
+          <CapturedPiecesPanel capturedPieces={capturedPieces} />
+          
+          <details className="group [&_summary::-webkit-details-marker]:hidden">
+            <summary className="cursor-pointer list-none rounded-lg border border-slate-800 bg-slate-900/80 p-3 shadow-sm hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-slate-50">Stockfish Analysis</span>
+                <span className="text-emerald-500 transition-transform group-open:-rotate-180">▼</span>
+              </div>
+            </summary>
+            <div className="mt-2">
+              <AnalysisPanel
+                analysis={analysis}
+                error={analysisError}
+                isDisabled={!activeGame?.fen}
+                isThinking={isAnalyzing}
+                onAnalyze={handleAnalyzePosition}
+              />
+            </div>
+          </details>
+
+          <details className="group [&_summary::-webkit-details-marker]:hidden">
+            <summary className="cursor-pointer list-none rounded-lg border border-slate-800 bg-slate-900/80 p-3 shadow-sm hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-slate-50">AI Coaching</span>
+                <span className="text-emerald-500 transition-transform group-open:-rotate-180">▼</span>
+              </div>
+            </summary>
+            <div className="mt-2">
+              <AIAnalysisPanel
+                error={aiError}
+                explanation={aiExplanation}
+                isDisabled={!analysis}
+                isGenerating={isGeneratingAi}
+                onExplain={handleExplainPosition}
+                onStyleChange={setAiStyle}
+                style={aiStyle}
+              />
+            </div>
+          </details>
+          
+          <GameResultBanner game={activeGame} />
         </div>
-      </Section>
-    </PageContainer>
+      </div>
+    </div>
   );
 }

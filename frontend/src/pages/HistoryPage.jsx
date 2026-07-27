@@ -62,13 +62,13 @@ export function HistoryPage() {
               <div key={i} className="h-24 rounded-lg bg-slate-800" />
             ))}
           </div>
-        ) : data.games.length === 0 ? (
+        ) : !data?.games || data.games.length === 0 ? (
           <EmptyState title="No games found">
             Try adjusting your search or filters.
           </EmptyState>
         ) : (
           <div className="flex flex-col gap-4">
-            {data.games.map((game) => (
+            {data?.games?.map((game) => (
               <GameHistoryCard key={game.id} game={game} />
             ))}
           </div>

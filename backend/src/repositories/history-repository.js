@@ -14,7 +14,7 @@ function buildWhereClause(result, search) {
   }
 
   if (search) {
-    conditions.push(ilike(games.id, `%${search}%`));
+    conditions.push(ilike(sql`${games.id}::text`, `%${search}%`));
   }
 
   return conditions.length > 0 ? and(...conditions) : undefined;
