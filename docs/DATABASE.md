@@ -15,7 +15,7 @@ erDiagram
         varchar name
         timestamp created_at
     }
-    
+
     GAMES {
         uuid id PK
         uuid white_player_id FK
@@ -25,7 +25,7 @@ erDiagram
         timestamp created_at
         timestamp completed_at
     }
-    
+
     MOVES {
         uuid id PK
         uuid game_id FK
@@ -38,7 +38,7 @@ erDiagram
         varchar fen_after
         timestamp created_at
     }
-    
+
     ANALYSES {
         uuid id PK
         uuid game_id FK
@@ -58,25 +58,33 @@ erDiagram
 ## 2. Table Descriptions
 
 ### `players`
+
 Stores ephemeral user profiles. Since authentication is not implemented, players are uniquely identified by a UUID generated on the client and stored in `localStorage`.
+
 - **Indexes:** Primary Key on `id`.
 
 ### `games`
+
 Archives completed games.
+
 - `status`: Always represents a terminal state in the DB (e.g., `completed`, `resigned`, `drawn`).
 - `result`: Indicates the winner (`w`, `b`, or `draw`).
 - **Indexes:** Primary Key on `id`. Foreign keys to `players(id)`.
 
 ### `moves`
+
 A complete chronological ledger of every move made in a game.
+
 - `san`: Standard Algebraic Notation (e.g., `Nxf3+`).
-- `fen_after`: The board state *after* the move was applied.
-- **Indexes:** 
+- `fen_after`: The board state _after_ the move was applied.
+- **Indexes:**
   - Primary Key on `id`.
   - Composite Index on `(game_id, move_number)` for fast chronological retrieval of a game's move history.
 
 ### `analyses`
+
 Stores expensive, lazily-generated post-game reviews.
+
 - `stockfish_data`: JSON blob containing engine evaluation, depth, and best move.
 - `gemini_data`: JSON blob containing AI coaching tips and summaries.
 - **Indexes:** Primary Key on `id`. Unique Foreign Key on `game_id` (1:1 relationship).
@@ -86,6 +94,7 @@ Stores expensive, lazily-generated post-game reviews.
 ## 3. Migration Strategy
 
 Schema changes are managed using Drizzle Kit.
+
 1. Modify the schema definitions in `backend/src/db/schema.js`.
 2. Generate a migration file: `npm run db:generate`.
 3. Apply the migration to the database: `npm run db:migrate`.

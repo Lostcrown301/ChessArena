@@ -53,7 +53,10 @@ export function RecentGamesPanel() {
     <Card as="aside" className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-slate-50">Recent Games</h2>
-        <Link to="/history" className="text-sm font-semibold text-emerald-400 hover:text-emerald-300">
+        <Link
+          to="/history"
+          className="text-sm font-semibold text-emerald-400 hover:text-emerald-300"
+        >
           View all
         </Link>
       </div>
@@ -70,7 +73,10 @@ export function RecentGamesPanel() {
                 {game.whitePlayer?.displayName} vs {game.blackPlayer?.displayName}
               </span>
               <span className="text-xs text-slate-400">
-                {new Date(game.startedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                {new Date(game.startedAt).toLocaleDateString(undefined, {
+                  month: 'short',
+                  day: 'numeric',
+                })}
               </span>
             </div>
             <span className="mt-1 text-xs text-slate-500 group-hover:text-emerald-400/80">

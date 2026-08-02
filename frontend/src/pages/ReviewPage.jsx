@@ -22,7 +22,7 @@ export function ReviewPage() {
 
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [orientation, setOrientation] = useState('white');
-  
+
   const [explanation, setExplanation] = useState(null);
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
   const [aiError, setAiError] = useState(null);
@@ -40,7 +40,8 @@ export function ReviewPage() {
           setCurrentIndex(data.moves?.length ? data.moves.length - 1 : -1);
         }
       } catch {
-        if (mounted) setError('Failed to load review data. The game might not exist or analysis is missing.');
+        if (mounted)
+          setError('Failed to load review data. The game might not exist or analysis is missing.');
       } finally {
         if (mounted) setIsLoading(false);
       }
@@ -55,7 +56,7 @@ export function ReviewPage() {
 
   const handleExplain = async () => {
     if (!reviewData?.analysis?.id) return;
-    
+
     setIsGeneratingAi(true);
     setAiError(null);
     try {
@@ -65,7 +66,7 @@ export function ReviewPage() {
         currentFen: reviewData.moves[currentIndex]?.fen,
         gameResult: reviewData.game.result,
       };
-      
+
       const result = await explainAnalysis({
         analysisId: reviewData.analysis.id,
         context,
@@ -124,11 +125,7 @@ export function ReviewPage() {
         <div className="mt-6 grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
           {/* Left Column: Board and Controls */}
           <div className="flex flex-col gap-4 lg:col-span-7">
-            <ReviewBoardPanel
-              position={fen}
-              orientation={orientation}
-              lastMove={currentMove}
-            />
+            <ReviewBoardPanel position={fen} orientation={orientation} lastMove={currentMove} />
             <ReviewControls
               currentIndex={currentIndex}
               totalMoves={moves.length}

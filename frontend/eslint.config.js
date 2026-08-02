@@ -10,7 +10,7 @@ export default [
   },
   js.configs.recommended,
   {
-    files: ['*.config.js', 'frontend/*.config.js', 'backend/*.config.js'],
+    files: ['*.js', '*.config.js'],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
@@ -21,7 +21,7 @@ export default [
     },
   },
   {
-    files: ['frontend/**/*.{js,jsx}'],
+    files: ['src/**/*.{js,jsx}'],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
@@ -51,17 +51,6 @@ export default [
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
       'react/prop-types': 'off',
-    },
-  },
-  {
-    files: ['backend/**/*.js'],
-    languageOptions: {
-      ecmaVersion: 'latest',
-      sourceType: 'module',
-      globals: {
-        ...globals.node,
-        ...globals.es2024,
-      },
     },
   },
 ];

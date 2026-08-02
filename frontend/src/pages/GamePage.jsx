@@ -2,8 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { ConnectionStatus } from '@components/common/ConnectionStatus';
 import { LoadingOverlay } from '@components/common/LoadingOverlay';
-import { PageContainer } from '@components/common/PageContainer';
-import { Section } from '@components/common/Section';
 import { CapturedPiecesPanel } from '@components/game/CapturedPiecesPanel';
 import { ChessBoardPanel } from '@components/game/ChessBoardPanel';
 import { GameControls } from '@components/game/GameControls';
@@ -409,7 +407,7 @@ export function GamePage() {
               gameId={gameId}
               isCurrentTurn={isCurrentPlayerTurn(
                 activeGame,
-                boardOrientation === 'white' ? 'black' : 'white'
+                boardOrientation === 'white' ? 'black' : 'white',
               )}
               player={boardOrientation === 'white' ? blackPlayer : whitePlayer}
               remainingMs={
@@ -431,7 +429,7 @@ export function GamePage() {
               gameId={gameId}
               isCurrentTurn={isCurrentPlayerTurn(
                 activeGame,
-                boardOrientation === 'white' ? 'white' : 'black'
+                boardOrientation === 'white' ? 'white' : 'black',
               )}
               player={boardOrientation === 'white' ? whitePlayer : blackPlayer}
               remainingMs={
@@ -462,12 +460,14 @@ export function GamePage() {
             onResign={() => runGameAction(resignGame, 'Resignation submitted.')}
           />
           <CapturedPiecesPanel capturedPieces={capturedPieces} />
-          
+
           <details className="group [&_summary::-webkit-details-marker]:hidden">
             <summary className="cursor-pointer list-none rounded-lg border border-slate-800 bg-slate-900/80 p-3 shadow-sm hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-slate-50">Stockfish Analysis</span>
-                <span className="text-emerald-500 transition-transform group-open:-rotate-180">▼</span>
+                <span className="text-emerald-500 transition-transform group-open:-rotate-180">
+                  ▼
+                </span>
               </div>
             </summary>
             <div className="mt-2">
@@ -485,7 +485,9 @@ export function GamePage() {
             <summary className="cursor-pointer list-none rounded-lg border border-slate-800 bg-slate-900/80 p-3 shadow-sm hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-slate-50">AI Coaching</span>
-                <span className="text-emerald-500 transition-transform group-open:-rotate-180">▼</span>
+                <span className="text-emerald-500 transition-transform group-open:-rotate-180">
+                  ▼
+                </span>
               </div>
             </summary>
             <div className="mt-2">
@@ -500,7 +502,7 @@ export function GamePage() {
               />
             </div>
           </details>
-          
+
           <GameResultBanner game={activeGame} />
         </div>
       </div>

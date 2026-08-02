@@ -13,30 +13,30 @@ sequenceDiagram
     participant P1 as Player 1 (White)
     participant P2 as Player 2 (Black)
     participant S as Server
-    
+
     P1->>S: POST /api/games (Create)
     S-->>P1: 201 Created { gameId }
-    
+
     P1->>S: Socket Connect
     P1->>S: join_game { gameId, playerId, playerName }
     S-->>P1: game_joined { color: "w" }
     S-->>P1: game_updated (Waiting state)
-    
+
     P2->>S: Socket Connect
     P2->>S: join_game { gameId, playerId, playerName }
     S-->>P2: game_joined { color: "b" }
     S-->>P1: game_updated (Active state)
     S-->>P2: game_updated (Active state)
-    
+
     P1->>S: make_move { gameId, playerId, move: "e2e4" }
     S-->>P1: move_success
     S-->>P1: game_updated
     S-->>P2: game_updated
-    
+
     P2->>S: resign { gameId, playerId }
     S-->>P1: game_updated (White wins by resignation)
     S-->>P2: game_updated (White wins by resignation)
-    
+
     Note over S: Game is saved to PostgreSQL
 ```
 
@@ -47,6 +47,7 @@ sequenceDiagram
 These events are emitted by the frontend React application to the Node.js backend.
 
 ### `join_game`
+
 - **Direction:** Client → Server
 - **Payload:**
   ```json
@@ -61,6 +62,7 @@ These events are emitted by the frontend React application to the Node.js backen
 - **Error Response:** Emits `game_error` to the sender (e.g., "Game is full").
 
 ### `make_move`
+
 - **Direction:** Client → Server
 - **Payload:**
   ```json
@@ -74,13 +76,14 @@ These events are emitted by the frontend React application to the Node.js backen
     }
   }
   ```
-- **Validation:** 
+- **Validation:**
   1. Verifies the `playerId` owns the color currently to move.
   2. Uses `chess.js` to validate the move against the server-side board state.
 - **Success Response:** Emits `move_success` to the sender, and broadcasts `game_updated` to the room.
 - **Error Response:** Emits `game_error` to the sender (e.g., "Invalid move", "Not your turn").
 
 ### `resign`
+
 - **Direction:** Client → Server
 - **Payload:**
   ```json
@@ -99,6 +102,7 @@ These events are emitted by the frontend React application to the Node.js backen
 These events are emitted by the Node.js backend to connected frontend clients.
 
 ### `game_updated`
+
 - **Direction:** Server → Client (Broadcast to Room)
 - **Payload:**
   ```json
@@ -116,6 +120,7 @@ These events are emitted by the Node.js backend to connected frontend clients.
 - **Trigger:** Fired whenever the game state changes (player joins, move is made, game ends).
 
 ### `game_joined`
+
 - **Direction:** Server → Client (Unicast to Sender)
 - **Payload:**
   ```json
@@ -127,11 +132,13 @@ These events are emitted by the Node.js backend to connected frontend clients.
 - **Trigger:** Fired successfully completing a `join_game` request. Tells the client which side of the board they are playing.
 
 ### `move_success`
+
 - **Direction:** Server → Client (Unicast to Sender)
 - **Payload:** None
 - **Trigger:** Fired after successfully validating a `make_move` request. Used by the client to resolve optimistic UI updates.
 
 ### `game_error`
+
 - **Direction:** Server → Client (Unicast to Sender)
 - **Payload:**
   ```json

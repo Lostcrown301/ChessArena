@@ -29,13 +29,9 @@ export const listHistory = controllerAction((req) =>
   }),
 );
 
-export const getHistoryGame = controllerAction((req) =>
-  historyService.getGame(req.params.gameId),
-);
+export const getHistoryGame = controllerAction((req) => historyService.getGame(req.params.gameId));
 
-export const getHistoryPgn = controllerAction((req) =>
-  historyService.getPgn(req.params.gameId),
-);
+export const getHistoryPgn = controllerAction((req) => historyService.getPgn(req.params.gameId));
 
 export const getHistoryAnalysis = controllerAction((req) =>
   historyService.getAnalysis(req.params.gameId),

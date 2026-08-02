@@ -4,12 +4,12 @@ import { ConnectionStatus } from '@components/common/ConnectionStatus';
 import { TimerDisplay } from './TimerDisplay';
 
 // PlayerPanel renders backend player identity and runtime connection state.
-export function PlayerPanel({ 
-  isCurrentTurn = false, 
+export function PlayerPanel({
+  isCurrentTurn = false,
   player,
   remainingMs = 600000,
   timerStartedAt = null,
-  gameId
+  gameId,
 }) {
   const displayName = player?.displayName ?? 'Waiting for player';
   const color = player?.color ?? 'Player';
@@ -35,11 +35,11 @@ export function PlayerPanel({
           </div>
         </div>
       </div>
-      <TimerDisplay 
+      <TimerDisplay
         gameId={gameId}
-        isActiveTurn={isCurrentTurn} 
-        remainingMs={remainingMs} 
-        timerStartedAt={timerStartedAt} 
+        isActiveTurn={isCurrentTurn}
+        remainingMs={remainingMs}
+        timerStartedAt={timerStartedAt}
       />
     </section>
   );

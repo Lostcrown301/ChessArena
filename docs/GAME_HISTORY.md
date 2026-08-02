@@ -39,9 +39,10 @@ This system leverages the existing persistence layer built in earlier milestones
 
 ## Review Flow
 
-The `ReviewPage` does **not** rely on `chess.js` or any client-side chess validation. 
+The `ReviewPage` does **not** rely on `chess.js` or any client-side chess validation.
 
 When stepping through moves:
+
 1. The frontend maintains a `currentIndex` into the `moves` array.
 2. The board position is updated using the `fen` field of the current move.
 3. The PGN and move list are derived from the backend data.
@@ -51,6 +52,7 @@ When stepping through moves:
 ## Pagination and Filtering
 
 The `/api/history` endpoint supports standard offset-based pagination.
+
 - **Filters**: `result` (e.g., `white_win`, `black_win`, `draw`)
 - **Search**: Partial match on `gameId`.
 - **Sort**: `desc` (newest first) or `asc` (oldest first) based on `startedAt`.

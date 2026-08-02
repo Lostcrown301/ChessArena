@@ -40,6 +40,7 @@ Server shutdown calls `stockfishService.shutdown()` so the engine receives
 ### Crash Recovery & Failure Handling
 
 If the engine crashes (e.g., memory exhaustion, segfault) or exceeds the maximum configured analysis timeout (`timeLimit + 5000ms`), the service initiates a crash recovery sequence:
+
 1. The hanging promise is explicitly rejected with `ENGINE_CRASHED` or `ENGINE_TIMEOUT`.
 2. The internal `engine` and `initializing` states are aggressively cleared (`null`).
 3. The underlying process is terminated via `safeStop()`.

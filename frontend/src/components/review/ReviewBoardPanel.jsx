@@ -2,10 +2,11 @@ import { Chessboard } from 'react-chessboard';
 
 export function ReviewBoardPanel({ position, orientation = 'white', lastMove }) {
   const customSquareStyles = {};
-  
+
   if (lastMove?.from && lastMove?.to) {
     const highlight = {
-      background: 'radial-gradient(circle, rgba(16, 185, 129, 0.38) 26%, rgba(16, 185, 129, 0.18) 28%, transparent 52%)',
+      background:
+        'radial-gradient(circle, rgba(16, 185, 129, 0.38) 26%, rgba(16, 185, 129, 0.18) 28%, transparent 52%)',
     };
     customSquareStyles[lastMove.from] = highlight;
     customSquareStyles[lastMove.to] = highlight;

@@ -1,6 +1,7 @@
 # Redis Architecture
 
 Redis is utilized in Chess Arena for two critical, interrelated purposes:
+
 1. **Active Game State:** High-speed storage for ongoing games.
 2. **Socket.IO Pub/Sub:** Enabling broadcast events across multiple Node.js instances.
 
@@ -22,7 +23,8 @@ The application uses a prefixed key structure to prevent collisions.
 ```text
 chess-arena:game:{uuid}
 ```
-*Example:* `chess-arena:game:550e8400-e29b-41d4-a716-446655440000`
+
+_Example:_ `chess-arena:game:550e8400-e29b-41d4-a716-446655440000`
 
 ---
 
@@ -40,12 +42,11 @@ Game state is serialized using standard JSON when storing strings in Redis.
     "w": { "id": "...", "name": "Alice" },
     "b": { "id": "...", "name": "Bob" }
   },
-  "moves": [
-    { "from": "e2", "to": "e4", "san": "e4" }
-  ]
+  "moves": [{ "from": "e2", "to": "e4", "san": "e4" }]
 }
 ```
-*Note: Because Redis only stores strings, the `moves` array and `players` object are serialized and deserialized heavily. However, since active game objects rarely exceed a few kilobytes, the JSON parse/stringify overhead is negligible.*
+
+_Note: Because Redis only stores strings, the `moves` array and `players` object are serialized and deserialized heavily. However, since active game objects rarely exceed a few kilobytes, the JSON parse/stringify overhead is negligible._
 
 ---
 

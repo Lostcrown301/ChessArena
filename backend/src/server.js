@@ -13,7 +13,7 @@ const io = createSocketServer(server);
 
 server.listen(env.port, () => {
   logger.info({ port: env.port, environment: env.nodeEnv }, 'Chess Arena API listening');
-  
+
   // Eagerly pre-warm Stockfish so the first analysis request doesn't suffer WebAssembly compilation delays
   stockfishService.initialize().catch(() => {
     // Initialization errors are handled within the service logger
@@ -30,9 +30,9 @@ function shutdown(signal) {
       process.exit(1);
     }
     await Promise.allSettled([
-      closeRedisClient(), 
+      closeRedisClient(),
       stockfishService.shutdown(),
-      databaseConnection.pool.end()
+      databaseConnection.pool.end(),
     ]);
     process.exit(0);
   });

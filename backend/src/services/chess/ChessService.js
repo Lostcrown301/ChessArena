@@ -17,10 +17,15 @@ class Mutex {
     }
 
     let release;
-    const nextLock = new Promise(resolve => { release = resolve; });
+    const nextLock = new Promise((resolve) => {
+      release = resolve;
+    });
     const currentLock = this.locks.get(key);
 
-    this.locks.set(key, currentLock.then(() => nextLock));
+    this.locks.set(
+      key,
+      currentLock.then(() => nextLock),
+    );
     await currentLock;
 
     return () => {

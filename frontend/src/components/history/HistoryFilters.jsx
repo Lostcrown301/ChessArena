@@ -19,7 +19,7 @@ export function HistoryFilters({ filterState, onFilterChange }) {
               'rounded-md px-3 py-1.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300',
               filterState.result === res.value
                 ? 'bg-emerald-500 text-emerald-950 shadow-sm'
-                : 'text-slate-400 hover:text-slate-100'
+                : 'text-slate-400 hover:text-slate-100',
             )}
           >
             {res.label}

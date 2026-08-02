@@ -14,7 +14,7 @@ export function HistoryPage() {
     search: '',
     sort: 'desc',
   });
-  
+
   const [data, setData] = useState({ games: [], pagination: { totalPages: 1 } });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -63,9 +63,7 @@ export function HistoryPage() {
             ))}
           </div>
         ) : !data?.games || data.games.length === 0 ? (
-          <EmptyState title="No games found">
-            Try adjusting your search or filters.
-          </EmptyState>
+          <EmptyState title="No games found">Try adjusting your search or filters.</EmptyState>
         ) : (
           <div className="flex flex-col gap-4">
             {data?.games?.map((game) => (

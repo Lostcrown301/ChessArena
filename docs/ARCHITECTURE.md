@@ -41,7 +41,7 @@ flowchart TD
 
     Socket <-->|Pub/Sub & State| Redis
     API <-->|Archive| Postgres
-    
+
     API --> Stockfish
     API --> Gemini
     Gemini --> Ext_AI
@@ -52,27 +52,33 @@ flowchart TD
 ## 2. Core Subsystems
 
 ### Frontend
+
 - **Framework:** React 18 / Vite
 - **Responsibility:** Rendering the chessboard (`react-chessboard`), validating optimistic UI interactions, managing the WebSocket connection, and displaying AI coaching.
 - **State Management:** React Context API for global state (Theme, Socket, Game) and local state for UI transitions.
 
 ### Backend
+
 - **Framework:** Express.js 5 / Socket.IO
 - **Responsibility:** Serving REST endpoints, maintaining WebSocket rooms, and enforcing game rules using `chess.js` (Server-Authoritative model).
 - **Statelessness:** The backend processes maintain no long-term state. All game state is injected from and persisted to Redis.
 
 ### Redis
+
 - **Responsibility:** High-speed, ephemeral storage for active gameplay state. Acts as the Pub/Sub adapter for Socket.IO, enabling horizontal scaling of backend nodes.
 
 ### PostgreSQL
+
 - **Responsibility:** Long-term archival storage for completed games, moves, player identities, and saved analyses. Interacted with via Drizzle ORM.
 
 ### Stockfish
+
 - **Implementation:** WebAssembly port (`stockfish.js`) running in an isolated Node.js worker thread.
 - **Responsibility:** Providing raw, objective, deterministic evaluations (centipawns, depth, best moves) for game histories.
 - **Resilience:** Implements automatic crash recovery and timeouts.
 
 ### Gemini
+
 - **Responsibility:** Translating raw Stockfish metrics into human-readable coaching tips (Beginner, Intermediate, Advanced).
 - **Resilience:** Implements exponential backoff for rate limits and degrades gracefully if the API is unreachable.
 
@@ -81,7 +87,9 @@ flowchart TD
 ## 3. Data Flows
 
 ### Request Flow (HTTP)
+
 Standard stateless request cycle, primarily used for history, health checks, and analysis.
+
 1. Client makes HTTP GET/POST to `/api/*`.
 2. Request hits Render load balancer and is routed to an Express instance.
 3. Express processes middleware (Helmet, Rate Limiter, CORS).
@@ -89,6 +97,7 @@ Standard stateless request cycle, primarily used for history, health checks, and
 5. Response returned to client.
 
 ### Socket Flow (Gameplay)
+
 1. Client connects to `/` via WebSocket.
 2. Client emits `join_game` with a UUID.
 3. Express handles the event, querying Redis for the active game state.
@@ -98,11 +107,13 @@ Standard stateless request cycle, primarily used for history, health checks, and
 7. Express updates Redis and broadcasts the new state to the room.
 
 ### History Flow
+
 1. When a game ends (checkmate, resignation, draw), the backend transitions the game state.
 2. The final state is removed from Redis.
 3. The game, players, and full move list are asynchronously inserted into PostgreSQL.
 
 ### Review / Analysis Pipeline
+
 1. Client requests a review for a completed game (`/api/history/:gameId/review`).
 2. Backend checks if an analysis already exists in PostgreSQL.
 3. If not, backend queries PostgreSQL for the PGN.
@@ -141,20 +152,21 @@ flowchart LR
 
     Repo -->|Webhook| Vercel
     Repo -->|Webhook| Render
-    
+
     Client((User Browser)) -->|Serves UI| Static
     Client -->|API / WSS| LB
-    
+
     LB --> Node1
     LB --> Node2
-    
+
     Node1 <--> RedisCache
     Node2 <--> RedisCache
-    
+
     Node1 <--> PG
     Node2 <--> PG
 ```
 
 ### Constraints & Considerations
+
 - Because we use WebSockets, standard serverless functions (like AWS Lambda or Vercel Functions) cannot host the backend. The backend must be a long-running web service (e.g., Render Web Service).
 - Render's load balancer distributes traffic. Because we use `redis` as the Socket.IO adapter, clients can connect to any Node instance and still receive broadcasts from clients connected to other instances.

@@ -5,7 +5,6 @@ const socket2 = io('http://localhost:4000');
 
 let gameId;
 let whitePlayerId;
-let blackPlayerId;
 
 socket1.on('connect', () => {
   console.log('White connected');
@@ -18,16 +17,19 @@ socket1.on('connect', () => {
       console.log('Black connected');
       socket2.emit('game:join', { displayName: 'BlackPlayer', gameId }, (res2) => {
         console.log('GAME JOINED', res2?.success);
-        blackPlayerId = res2.data.game.players.black.id;
 
         console.log('--- WHITE MOVES ---');
-        socket1.emit('game:move', { 
-          gameId, 
-          playerId: whitePlayerId, 
-          move: { from: 'e2', to: 'e4' } 
-        }, (res3) => {
-          console.log('WHITE MOVE ACK:', res3?.success);
-        });
+        socket1.emit(
+          'game:move',
+          {
+            gameId,
+            playerId: whitePlayerId,
+            move: { from: 'e2', to: 'e4' },
+          },
+          (res3) => {
+            console.log('WHITE MOVE ACK:', res3?.success);
+          },
+        );
       });
     });
   });

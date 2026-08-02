@@ -2,11 +2,12 @@
 
 ![Chess Arena Header](https://via.placeholder.com/1200x300?text=Chess+Arena+-+Realtime+Multiplayer+Chess)
 
-A production-quality, full-stack foundation for a real-time multiplayer chess platform. 
+A production-quality, full-stack foundation for a real-time multiplayer chess platform.
 
 The application uses a server-authoritative architecture where clients request actions, but the API validates moves, owns the board state, synchronizes rooms, and persists completed games.
 
 ## Why this project?
+
 Chess Arena was built to demonstrate how to seamlessly orchestrate complex state across multiple specialized backend services (Redis, PostgreSQL, Stockfish, Gemini AI) while serving a highly interactive React/Vite frontend over WebSockets. It serves as a comprehensive reference architecture for real-time multiplayer game development in Node.js.
 
 ## Features
@@ -24,7 +25,7 @@ Chess Arena utilizes a micro-service-like separation of concerns within a monoli
 
 1. **Frontend:** React application communicating via standard HTTP (for history/auth) and Socket.IO (for gameplay).
 2. **Backend:** Express API and Socket.IO server handling business logic.
-3. **Data Layer:** 
+3. **Data Layer:**
    - **Redis:** Manages ephemeral, high-speed active game state.
    - **PostgreSQL:** Archives completed games and history (managed via Drizzle ORM).
 4. **Analysis Layer:**
@@ -45,35 +46,28 @@ For more details, see the [Architecture Documentation](./docs/ARCHITECTURE.md).
 
 ```text
 Chess-Arena/
-├── backend/                  # Express API, Socket server, and services
+├── backend/                  # Independent Express API, Socket server, and services
 │   ├── drizzle/              # Database migrations
-│   ├── src/
-│   │   ├── config/           # Environment and logger setup
-│   │   ├── db/               # Drizzle connection and schema
-│   │   ├── lib/              # Shared utilities (Redis client)
-│   │   ├── middleware/       # Express middlewares (Rate limiting, errors)
-│   │   ├── routes/           # REST API endpoints
-│   │   ├── services/         # Business logic (Chess, AI, Stockfish)
-│   │   └── socket/           # Socket.IO handlers
-├── frontend/                 # React SPA
-│   ├── src/
-│   │   ├── components/       # Reusable UI primitives and complex views
-│   │   ├── context/          # Global state (Theme, Socket, Game)
-│   │   ├── hooks/            # Custom React hooks
-│   │   ├── layouts/          # Page wrappers
-│   │   ├── pages/            # Routable views
-│   │   ├── services/         # API and Socket communication
-│   │   └── styles/           # Tailwind configuration
+│   ├── src/                  # Application source code
+│   ├── package.json          # Backend dependencies and scripts
+│   └── ...
+├── frontend/                 # Independent React SPA
+│   ├── src/                  # React source code
+│   ├── package.json          # Frontend dependencies and scripts
+│   └── ...
 ├── docs/                     # Architectural and API documentation
-└── package.json              # Monorepo workspace configuration
+├── .env.example
+├── .gitignore
+├── CHANGELOG.md
+└── README.md
 ```
 
 ## Screenshots
 
-> *Replace these placeholders with actual screenshots of the application running.*
+> _Replace these placeholders with actual screenshots of the application running._
 
-| Lobby | Active Game | Game Review |
-|:---:|:---:|:---:|
+|                             Lobby                             |                          Active Game                          |                           Game Review                           |
+| :-----------------------------------------------------------: | :-----------------------------------------------------------: | :-------------------------------------------------------------: |
 | ![Lobby](https://via.placeholder.com/400x300?text=Lobby+View) | ![Game](https://via.placeholder.com/400x300?text=Active+Game) | ![Review](https://via.placeholder.com/400x300?text=Game+Review) |
 
 ---
@@ -83,39 +77,64 @@ Chess-Arena/
 To run Chess Arena locally, you need Node.js (v20+), npm (v10+), and a local or cloud Redis/Postgres instance.
 
 ### 1. Backend Setup
-Navigate to the `backend` folder, install dependencies (handled by root workspace), and copy the environment configuration:
+
+Navigate to the `backend` folder, install dependencies, and copy the environment configuration:
+
 ```bash
-cp backend/.env.example backend/.env
+cd backend
+npm install
+cp .env.example .env
 ```
+
 Ensure you have a PostgreSQL database and a Redis server running.
 
 ### 2. Frontend Setup
-Similarly, configure the frontend:
+
+In a separate terminal, navigate to the `frontend` folder, install dependencies, and copy the environment configuration:
+
 ```bash
-cp frontend/.env.example frontend/.env
+cd frontend
+npm install
+cp .env.example .env
 ```
 
 ### 3. PostgreSQL Setup
-The application uses Drizzle ORM. Configure your `DATABASE_URL` in `backend/.env`, then run migrations to build the schema:
+
+The application uses Drizzle ORM. Configure your `DATABASE_URL` in `backend/.env`, then run migrations from the `backend/` directory:
+
 ```bash
-npm run db:migrate --workspace backend
+cd backend
+npm run db:migrate
 ```
 
 ### 4. Redis Setup
+
 Ensure a local Redis instance is running on port `6379`, or provide a cloud connection string in `REDIS_URL`. Redis is required if you set `GAME_STORE_DRIVER=redis`. (For local development without Redis, you can use `GAME_STORE_DRIVER=memory`).
 
 ### 5. Stockfish Setup
+
 Stockfish is bundled as a WebAssembly/Node module via `stockfish.js`. No external binaries need to be installed. It initializes automatically when the backend starts.
 
 ### 6. Gemini Setup
+
 To enable AI coaching, obtain an API key from Google AI Studio and set `GEMINI_API_KEY` in `backend/.env`. If left blank, the application degrades gracefully and relies solely on raw Stockfish evaluations.
 
 ### 7. Starting the Application
-From the root directory, start both the frontend and backend concurrently:
+
+Start the backend and frontend separately in their respective directories:
+
+**Terminal 1 (Backend):**
 ```bash
-npm install
+cd backend
 npm run dev
 ```
+
+**Terminal 2 (Frontend):**
+```bash
+cd frontend
+npm run dev
+```
+
 - **Frontend:** http://localhost:5173
 - **Backend API:** http://localhost:4000
 - **Health Check:** http://localhost:4000/api/health
@@ -124,35 +143,43 @@ npm run dev
 
 ## Environment Variables
 
-The project uses `.env` files for configuration. A complete audit of all environment variables can be found in the [Environment Documentation](./docs/ENVIRONMENT.md).
+The project uses `.env` files inside `backend/` and `frontend/` for configuration. A complete audit of all environment variables can be found in the [Environment Documentation](./docs/ENVIRONMENT.md).
 
 ---
 
 ## Available npm Scripts
 
-From the repository root:
+**Backend (`cd backend`):**
 
-- `npm run dev`: Starts both frontend (Vite) and backend (nodemon) in development mode.
-- `npm run build`: Compiles the frontend for production.
-- `npm run start`: Starts the backend in production mode.
-- `npm run lint`: Runs ESLint across all workspaces.
-- `npm run format`: Runs Prettier to format code.
-- `npm run format:check`: Validates formatting without applying changes.
+- `npm run dev`: Starts the backend server with nodemon reloading.
+- `npm run start`: Runs the production backend server (`node src/server.js`).
+- `npm run build`: Runs syntax verification checks.
+- `npm run lint`: Runs ESLint on backend code.
+- `npm run format`: Formats backend files with Prettier.
+- `npm run db:migrate`: Applies Drizzle SQL migrations to PostgreSQL.
+- `npm run db:studio`: Opens Drizzle Studio visual database editor.
 
-Backend specific (`--workspace backend`):
-- `npm run db:migrate`: Applies Drizzle SQL migrations to the database.
-- `npm run db:studio`: Opens the Drizzle Studio visual database editor.
+**Frontend (`cd frontend`):**
+
+- `npm run dev`: Starts Vite dev server.
+- `npm run build`: Compiles the frontend for production (`dist/`).
+- `npm run preview`: Previews the production build locally.
+- `npm run lint`: Runs ESLint on frontend code.
+- `npm run format`: Formats frontend files with Prettier.
 
 ---
 
 ## Deployment Overview
 
 Chess Arena is designed for PaaS platforms like Vercel and Render.
+
 - **Frontend:** Deploy the `frontend/` directory to **Vercel** as a Vite project.
 - **Backend:** Deploy the `backend/` directory to **Render** as a Node Web Service.
 - **Infrastructure:** Use Neon for serverless PostgreSQL and Render Redis for the cache layer.
 
 For step-by-step instructions, see the [Deployment Guide](./docs/DEPLOYMENT.md) and [Production Checklist](./docs/PRODUCTION_CHECKLIST.md).
+
+For project-defense preparation, see the [Interview Preparation Handbook](./docs/INTERVIEW_PREPARATION.md).
 
 ---
 

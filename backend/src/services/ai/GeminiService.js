@@ -80,7 +80,11 @@ export class GeminiService {
         lastError = error;
 
         if (error.name === 'AbortError') {
-          lastError = new GeminiServiceError('GEMINI_TIMEOUT', 'Gemini explanation timed out.', 504);
+          lastError = new GeminiServiceError(
+            'GEMINI_TIMEOUT',
+            'Gemini explanation timed out.',
+            504,
+          );
         } else if (!(error instanceof GeminiServiceError)) {
           this.logger.error({ err: error }, 'Gemini explanation failed');
           lastError = new GeminiServiceError('GEMINI_UNAVAILABLE', 'Gemini is unavailable.', 503);

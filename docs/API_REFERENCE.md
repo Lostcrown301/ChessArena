@@ -18,6 +18,7 @@ To maintain backwards compatibility for existing clients, any breaking changes t
 ## 1. Health
 
 ### 1.1 Liveness Probe
+
 - **Method:** `GET`
 - **URL:** `/health`
 - **Purpose:** Verifies that the Express API process is running and accepting HTTP requests.
@@ -33,6 +34,7 @@ To maintain backwards compatibility for existing clients, any breaking changes t
   ```
 
 ### 1.2 Readiness Probe
+
 - **Method:** `GET`
 - **URL:** `/health/ready`
 - **Purpose:** Deep health check verifying connectivity to PostgreSQL, Redis, Stockfish, and Gemini. Gemini is considered a soft dependency (degraded).
@@ -59,6 +61,7 @@ To maintain backwards compatibility for existing clients, any breaking changes t
 ## 2. Games (Active)
 
 ### 2.1 Create Game
+
 - **Method:** `POST`
 - **URL:** `/games`
 - **Purpose:** Initializes a new active game in the memory/Redis store.
@@ -77,6 +80,7 @@ To maintain backwards compatibility for existing clients, any breaking changes t
   ```
 
 ### 2.2 Join Game
+
 - **Method:** `POST`
 - **URL:** `/games/:gameId/join`
 - **Purpose:** Assigns a player to an open color slot (white or black).
@@ -101,12 +105,14 @@ To maintain backwards compatibility for existing clients, any breaking changes t
   - `400 Bad Request`: Game is full, or player is already in the game.
 
 ### 2.3 Get Active Game State
+
 - **Method:** `GET`
 - **URL:** `/games/:gameId`
 - **Purpose:** Fetches the full current state of an active game.
 - **Success Response (200 OK):** Returns the full active game object.
 
 ### 2.4 Request Move (HTTP fallback)
+
 - **Method:** `POST`
 - **URL:** `/games/:gameId/move`
 - **Purpose:** HTTP alternative to Socket.IO for submitting a chess move.
@@ -123,6 +129,7 @@ To maintain backwards compatibility for existing clients, any breaking changes t
 ## 3. History (Completed Games)
 
 ### 3.1 List Completed Games
+
 - **Method:** `GET`
 - **URL:** `/history`
 - **Purpose:** Retrieves a paginated list of archived games.
@@ -140,16 +147,19 @@ To maintain backwards compatibility for existing clients, any breaking changes t
   ```
 
 ### 3.2 Get Completed Game Details
+
 - **Method:** `GET`
 - **URL:** `/history/:gameId`
 - **Purpose:** Retrieves metadata and the move list for a specific completed game.
 
 ### 3.3 Get Game PGN
+
 - **Method:** `GET`
 - **URL:** `/history/:gameId/pgn`
 - **Purpose:** Retrieves the raw PGN string of a completed game.
 
 ### 3.4 Get Game Review Data
+
 - **Method:** `GET`
 - **URL:** `/history/:gameId/review`
 - **Purpose:** Combines the historical game data with saved Stockfish analysis and Gemini coaching feedback.
@@ -159,6 +169,7 @@ To maintain backwards compatibility for existing clients, any breaking changes t
 ## 4. Analysis (Stockfish)
 
 ### 4.1 Analyze Position
+
 - **Method:** `POST`
 - **URL:** `/analysis`
 - **Purpose:** Submits a FEN to the Stockfish engine for evaluation.
@@ -188,6 +199,7 @@ To maintain backwards compatibility for existing clients, any breaking changes t
 ## 5. AI (Gemini)
 
 ### 5.1 Request Coaching Explanation
+
 - **Method:** `POST`
 - **URL:** `/ai/explain`
 - **Purpose:** Uses Google Gemini to translate a Stockfish evaluation into human-readable advice.
@@ -196,8 +208,8 @@ To maintain backwards compatibility for existing clients, any breaking changes t
   {
     "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     "stockfish": {
-       "evaluation": { "type": "cp", "value": 35 },
-       "bestMove": "e2e4"
+      "evaluation": { "type": "cp", "value": 35 },
+      "bestMove": "e2e4"
     },
     "pgn": "...",
     "style": "beginner"

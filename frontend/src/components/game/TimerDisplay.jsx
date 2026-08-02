@@ -10,13 +10,13 @@ function formatTime(ms) {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-export function TimerDisplay({ 
-  className, 
+export function TimerDisplay({
+  className,
   gameId,
-  isActiveTurn = false, 
-  label = 'Timer', 
-  remainingMs = 600000, 
-  timerStartedAt = null 
+  isActiveTurn = false,
+  label = 'Timer',
+  remainingMs = 600000,
+  timerStartedAt = null,
 }) {
   const [displayMs, setDisplayMs] = useState(remainingMs);
   const [localReceiptTime, setLocalReceiptTime] = useState(Date.now());
@@ -65,7 +65,7 @@ export function TimerDisplay({
       aria-label={`${label}: ${formatTime(displayMs)}`}
       className={classNames(
         'inline-flex min-w-20 items-center justify-center rounded-md border px-3 py-2 font-mono text-xl font-bold tracking-tight',
-        isActiveTurn 
+        isActiveTurn
           ? 'border-emerald-500 bg-emerald-950/30 text-emerald-100 shadow-[0_0_10px_rgba(16,185,129,0.2)]'
           : 'border-slate-700 bg-slate-950 text-slate-400',
         className,

@@ -15,12 +15,12 @@ function scheduleTimeout(gameId, game, io, chessService, logger) {
   }
 
   let remainingMs = game.turn === 'w' ? game.whiteRemainingMs : game.blackRemainingMs;
-  
+
   if (game.timerStartedAt) {
     const elapsed = Date.now() - new Date(game.timerStartedAt).getTime();
     remainingMs = Math.max(0, remainingMs - elapsed);
   }
-  
+
   const timeoutId = setTimeout(async () => {
     try {
       const terminalGame = await chessService.claimTimeout(gameId);
@@ -87,7 +87,7 @@ export function registerGameplayHandlers({ io, socket, roomManager, chessService
           room,
         }),
       );
-      
+
       scheduleTimeout(gameId, game, io, chessService, logger);
 
       return undefined;
@@ -123,7 +123,7 @@ export function registerGameplayHandlers({ io, socket, roomManager, chessService
       );
       broadcastBoardState(io, gameId, game);
       broadcastGameStatus(io, gameId, game);
-      
+
       scheduleTimeout(gameId, game, io, chessService, logger);
 
       return undefined;
@@ -172,7 +172,7 @@ export function registerGameplayHandlers({ io, socket, roomManager, chessService
           { socketId: socket.id, gameId, playerId: payload.playerId },
           'Socket game reconnected',
         );
-        
+
         scheduleTimeout(gameId, reconnectedGame, io, chessService, logger);
 
         return emitSocketSuccess(
@@ -283,10 +283,7 @@ export function registerGameplayHandlers({ io, socket, roomManager, chessService
       const game = await chessService.claimTimeout(gameId);
 
       if (game.status === GAME_STATUSES.TIMEOUT) {
-        logger.info(
-          { socketId: socket.id, gameId },
-          'Socket timeout claimed and accepted',
-        );
+        logger.info({ socketId: socket.id, gameId }, 'Socket timeout claimed and accepted');
         broadcastGameStatus(io, gameId, game);
       }
 

@@ -25,7 +25,7 @@ healthRouter.get('/ready', async (req, res) => {
       redis: 'checking',
       stockfish: 'checking',
       gemini: 'checking',
-    }
+    },
   };
 
   try {
@@ -51,7 +51,7 @@ healthRouter.get('/ready', async (req, res) => {
     }
 
     // 3. Check Stockfish (if initialized, is it responsive?)
-    // Stockfish isn't strictly required to be 'initialized' before traffic, 
+    // Stockfish isn't strictly required to be 'initialized' before traffic,
     // but if it is, we want to know it hasn't crashed.
     try {
       if (stockfishService.engine) {

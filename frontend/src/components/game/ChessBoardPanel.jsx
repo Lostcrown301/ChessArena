@@ -33,14 +33,12 @@ export function ChessBoardPanel({
       data-orientation={orientation}
       data-testid="chess-board-panel"
     >
-      <div
-        className="mx-auto aspect-square w-full max-w-full overflow-hidden rounded-md ring-1 ring-slate-700"
-      >
+      <div className="mx-auto aspect-square w-full max-w-full overflow-hidden rounded-md ring-1 ring-slate-700">
         {position ? (
           <Chessboard
             animationDuration={200}
             areArrowsAllowed={false}
-            arePiecesDraggable={!isSubmittingMove}
+            arePiecesDraggable={isDraggable && !isSubmittingMove}
             boardOrientation={orientation}
             customBoardStyle={{
               borderRadius: '6px',

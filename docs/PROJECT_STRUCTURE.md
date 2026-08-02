@@ -98,18 +98,13 @@ Chess-Arena/
 |   `-- STOCKFISH_ARCHITECTURE.md
 |-- .env.example
 |-- .gitignore
-|-- .prettierignore
-|-- .prettierrc
 |-- CHANGELOG.md
-|-- eslint.config.js
-|-- package-lock.json
-|-- package.json
 `-- README.md
 ```
 
 ## Boundaries
 
-- `frontend` owns browser UI, client routing, API calls, and Socket.IO client configuration.
-- `backend` owns HTTP routes, middleware, Socket.IO server setup, database clients, Redis clients, and operational concerns.
+- `frontend` is a standalone React web application that owns browser UI, client routing, API calls, and Socket.IO client configuration.
+- `backend` is a standalone Express Node.js application that owns HTTP routes, middleware, Socket.IO server setup, database clients, Redis clients, and operational concerns.
 - `docs` owns architecture and milestone documentation.
-- Root-level files own workspace scripts, linting, formatting, and repository metadata.
+- Root level contains project documentation and git metadata (no root Node.js project or monorepo tooling).

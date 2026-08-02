@@ -34,9 +34,9 @@ export function ReviewMoveList({ moves = [], currentIndex, onJumpToMove }) {
 
   const renderMoveCell = (move, index) => {
     if (!move) return <td className="px-3 py-2 font-mono">-</td>;
-    
+
     const isActive = index === currentIndex;
-    
+
     return (
       <td className="p-1">
         <button
@@ -46,7 +46,7 @@ export function ReviewMoveList({ moves = [], currentIndex, onJumpToMove }) {
             'w-full cursor-pointer rounded px-2 py-1 text-left font-mono text-sm transition',
             isActive
               ? 'bg-emerald-500/20 text-emerald-300 font-bold'
-              : 'text-slate-300 hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500'
+              : 'text-slate-300 hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500',
           )}
         >
           {move.san}

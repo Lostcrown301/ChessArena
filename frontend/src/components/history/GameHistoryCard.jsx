@@ -47,7 +47,7 @@ export function GameHistoryCard({ game }) {
           <span
             className={classNames(
               'rounded-full border px-2.5 py-0.5 text-xs font-semibold',
-              resultColors[game.result] || resultColors.ongoing
+              resultColors[game.result] || resultColors.ongoing,
             )}
           >
             {labels[game.result] || 'Unknown'}

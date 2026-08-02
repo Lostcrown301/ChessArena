@@ -88,8 +88,10 @@ export class ActiveGame {
     activeGame.turn = snapshot.turn ?? activeGame.chess.turn();
 
     activeGame.timeControl = snapshot.timeControl ?? { baseMs: 600000, incrementMs: 0 };
-    activeGame.whiteRemainingMs = typeof snapshot.whiteRemainingMs === 'number' ? snapshot.whiteRemainingMs : 600000;
-    activeGame.blackRemainingMs = typeof snapshot.blackRemainingMs === 'number' ? snapshot.blackRemainingMs : 600000;
+    activeGame.whiteRemainingMs =
+      typeof snapshot.whiteRemainingMs === 'number' ? snapshot.whiteRemainingMs : 600000;
+    activeGame.blackRemainingMs =
+      typeof snapshot.blackRemainingMs === 'number' ? snapshot.blackRemainingMs : 600000;
     activeGame.timerStartedAt = reviveDate(snapshot.timerStartedAt);
 
     return activeGame;

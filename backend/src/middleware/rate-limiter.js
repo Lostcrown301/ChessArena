@@ -6,10 +6,7 @@ const createLimiter = (options) => {
     standardHeaders: true,
     legacyHeaders: false,
     handler: (req, res, next, options) => {
-      logger.warn(
-        { ip: req.ip, path: req.path, limit: options.max },
-        'Rate limit exceeded',
-      );
+      logger.warn({ ip: req.ip, path: req.path, limit: options.max }, 'Rate limit exceeded');
       res.status(options.statusCode).json({
         success: false,
         error: {
